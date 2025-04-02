@@ -12,7 +12,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { SliderIcon, FilterIcon, XIcon } from 'lucide-react';
+import { SlidersIcon, FilterIcon, XIcon } from 'lucide-react';
 import DesignCard, { DesignProps } from '@/components/DesignCard';
 
 // Mock data - would come from an API in a real app
