@@ -101,7 +101,7 @@ const OTPVerification = () => {
           onChange={setOtp}
           render={({ slots }) => (
             <InputOTPGroup>
-              {slots.map((slot, i) => (
+              {slots && slots.map((slot, i) => (
                 <InputOTPSlot key={i} {...slot} index={i} />
               ))}
             </InputOTPGroup>
