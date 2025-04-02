@@ -13,7 +13,11 @@ import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, LogOutIcon }
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 
-const Navbar = () => {
+interface NavbarProps {
+  logo?: React.ReactNode;
+}
+
+const Navbar = ({ logo }: NavbarProps) => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   
@@ -31,9 +35,13 @@ const Navbar = () => {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center gap-2">
-            <span className="hidden font-bold text-xl sm:inline-block hero-gradient bg-clip-text text-transparent">
-              Design Next
-            </span>
+            {logo ? (
+              logo
+            ) : (
+              <span className="hidden font-bold text-xl sm:inline-block hero-gradient bg-clip-text text-transparent">
+                Design Next
+              </span>
+            )}
           </Link>
         </div>
         
