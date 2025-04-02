@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
+import { registerUser } from '@/services/authService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const passwordSchema = z.object({
   password: z.string()
@@ -27,6 +29,7 @@ const CreatePassword = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [signupData, setSignupData] = useState<any>(null);
+  const { login } = useAuth();
   
   useEffect(() => {
     // Retrieve signup data from session storage
@@ -56,39 +59,39 @@ const CreatePassword = () => {
         password: data.password,
       };
       
-      // In a real application, you would call an API to register the user
-      console.log('Creating user account:', userData);
+      // Register the user
+      const success = registerUser(userData);
       
-      // Mock successful registration
-      setTimeout(() => {
+      if (success) {
         // Clear session storage
         sessionStorage.removeItem('signupData');
         
+        // Log in the user
+        login({
+          id: `user-${Date.now()}`, // In a real app, this would come from the backend
+          name: signupData.name,
+          email: signupData.email,
+          userType: signupData.userType as 'homeowner' | 'architect'
+        });
+        
         // If architect, redirect to complete profile
         if (signupData?.userType === 'architect') {
-          sessionStorage.setItem('tempUserId', 'architect-123'); // Mock user ID
           navigate('/architect-profile');
+          toast({
+            title: "Account created successfully",
+            description: "Please complete your architect profile.",
+          });
         } else {
-          // If homeowner, registration is complete
-          // In a real app you would save auth token and redirect to dashboard
-          localStorage.setItem('isAuthenticated', 'true');
-          localStorage.setItem('user', JSON.stringify({
-            id: 'homeowner-123',
-            name: signupData?.name,
-            email: signupData?.email,
-            userType: 'homeowner'
-          }));
-          
+          // If homeowner, redirect to home
           navigate('/');
+          toast({
+            title: "Account created successfully",
+            description: "You are now logged in to your account.",
+          });
         }
-        
-        toast({
-          title: "Account created successfully",
-          description: signupData?.userType === 'architect' 
-            ? "Please complete your architect profile."
-            : "You are now logged in to your account.",
-        });
-      }, 1000);
+      } else {
+        throw new Error('Failed to register user');
+      }
     } catch (error) {
       console.error(error);
       toast({

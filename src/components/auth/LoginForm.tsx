@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
+import { loginUser } from '@/services/authService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -19,6 +21,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const LoginForm = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -32,22 +35,17 @@ const LoginForm = () => {
     setIsLoading(true);
     
     try {
-      // In a real application, you would authenticate with an API
-      console.log('Login attempt:', data);
+      // Authenticate the user
+      const user = loginUser(data.email, data.password);
       
-      // Mock successful login (with mock user data)
-      setTimeout(() => {
-        // Check if this is a homeowner or architect (mock check)
-        const isArchitect = data.email.includes('architect');
-        
-        // Store auth state in localStorage (in a real app, you'd use proper auth)
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('user', JSON.stringify({
-          id: isArchitect ? 'architect-123' : 'homeowner-123',
-          name: isArchitect ? 'John Architect' : 'Jane Homeowner',
-          email: data.email,
-          userType: isArchitect ? 'architect' : 'homeowner'
-        }));
+      if (user) {
+        // Log in the user
+        login({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          userType: user.userType as 'homeowner' | 'architect'
+        });
         
         navigate('/');
         
@@ -55,7 +53,9 @@ const LoginForm = () => {
           title: "Login successful",
           description: "Welcome back to Design Next!",
         });
-      }, 1000);
+      } else {
+        throw new Error('Invalid email or password');
+      }
     } catch (error) {
       console.error(error);
       toast({
