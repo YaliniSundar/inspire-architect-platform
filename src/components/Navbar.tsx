@@ -1,18 +1,30 @@
 
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon } from 'lucide-react';
+import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, LogOutIcon } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/components/ui/use-toast';
 
 const Navbar = () => {
-  // Mock authentication state - would come from auth context in a real app
-  const isAuthenticated = false;
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
+  };
   
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -58,18 +70,41 @@ const Navbar = () => {
                   <span className="sr-only">User menu</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>
-                  <Link to="/profile/me" className="w-full">Profile</Link>
+              <DropdownMenuContent align="end" className="w-56">
+                <div className="flex flex-col space-y-1 p-2">
+                  <p className="text-sm font-medium leading-none">{user?.name}</p>
+                  <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                  <p className="text-xs leading-none text-muted-foreground capitalize">{user?.userType}</p>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to={`/profile/${user?.id}`} className="w-full cursor-pointer">
+                    Profile
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuItem>Log out</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="w-full cursor-pointer">
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                >
+                  <LogOutIcon className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">Log in</Button>
-              <Button size="sm">Sign up</Button>
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/login">Log in</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to="/signup">Sign up</Link>
+              </Button>
             </div>
           )}
         </div>

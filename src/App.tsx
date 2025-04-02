@@ -13,6 +13,17 @@ import DesignDetail from "./pages/DesignDetail";
 import AIGenerator from "./pages/AIGenerator";
 import Layout from "./components/Layout";
 
+// Auth pages
+import SignupPage from "./pages/SignupPage";
+import VerifyOTPPage from "./pages/VerifyOTPPage";
+import CreatePasswordPage from "./pages/CreatePasswordPage";
+import ArchitectProfilePage from "./pages/ArchitectProfilePage";
+import LoginPage from "./pages/LoginPage";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+
+// Auth context
+import { AuthProvider } from "./contexts/AuthContext";
+
 // Moving QueryClient inside the component to ensure React context is available
 const App = () => {
   // Create a new QueryClient instance inside the component
@@ -20,21 +31,53 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Layout><Index /></Layout>} />
-            <Route path="/explore" element={<Layout><Explore /></Layout>} />
-            <Route path="/profile/:id" element={<Layout><Profile /></Layout>} />
-            <Route path="/design/:id" element={<Layout><DesignDetail /></Layout>} />
-            <Route path="/ai-generator" element={<Layout><AIGenerator /></Layout>} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Layout><Index /></Layout>} />
+              <Route path="/explore" element={<Layout><Explore /></Layout>} />
+              
+              {/* Auth routes */}
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/verify-otp" element={<VerifyOTPPage />} />
+              <Route path="/create-password" element={<CreatePasswordPage />} />
+              <Route path="/architect-profile" element={<ArchitectProfilePage />} />
+              <Route path="/login" element={<LoginPage />} />
+              
+              {/* Protected routes */}
+              <Route 
+                path="/profile/:id" 
+                element={
+                  <ProtectedRoute>
+                    <Layout><Profile /></Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/design/:id" 
+                element={
+                  <Layout><DesignDetail /></Layout>
+                } 
+              />
+              <Route 
+                path="/ai-generator" 
+                element={
+                  <ProtectedRoute>
+                    <Layout><AIGenerator /></Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };
