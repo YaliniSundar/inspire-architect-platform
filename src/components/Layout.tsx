@@ -1,17 +1,14 @@
 
 import React from 'react';
-import Navbar from './Navbar';
 import Footer from './Footer';
+import Navbar from './Navbar';
+import DesignNestLogo from './DesignNestLogo';
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      <main className="flex-grow">
+    <div className="min-h-screen flex flex-col">
+      <Navbar logo={<DesignNestLogo />} />
+      <main className="flex-1">
         {children}
       </main>
       <Footer />
