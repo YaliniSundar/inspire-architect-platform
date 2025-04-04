@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { toast } from '@/components/ui/use-toast';
 import { sendOTPEmail, verifyOTP } from '@/services/authService';
+import { ArrowLeft } from 'lucide-react';
 
 const OTPVerification = () => {
   const navigate = useNavigate();
@@ -88,16 +89,30 @@ const OTPVerification = () => {
     // Resend OTP
     if (signupData?.email) {
       sendOTPEmail(signupData.email);
+      
+      toast({
+        title: "OTP Resent",
+        description: "A new verification code has been sent to your email.",
+      });
     }
+  };
+
+  const handleGoBack = () => {
+    navigate('/signup');
   };
   
   return (
     <div className="space-y-6">
-      <div className="text-center mb-6">
-        <p className="text-muted-foreground mb-2">
-          Enter the 6-digit code sent to 
-          <span className="font-medium text-foreground"> {signupData?.email}</span>
-        </p>
+      <div className="flex items-center mb-4">
+        <Button variant="ghost" size="icon" onClick={handleGoBack} className="mr-2">
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="text-center flex-1">
+          <p className="text-muted-foreground mb-2">
+            Enter the 6-digit code sent to 
+            <span className="font-medium text-foreground"> {signupData?.email}</span>
+          </p>
+        </div>
       </div>
       
       <div className="flex justify-center mb-6">

@@ -6,12 +6,14 @@ import { cn } from '@/lib/utils';
 interface DesignNestLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showText?: boolean;
+  showDNOnly?: boolean;
   className?: string;
 }
 
 const DesignNestLogo: React.FC<DesignNestLogoProps> = ({ 
   size = 'md', 
   showText = true,
+  showDNOnly = false,
   className
 }) => {
   // Size mapping
@@ -26,38 +28,47 @@ const DesignNestLogo: React.FC<DesignNestLogoProps> = ({
   
   return (
     <div className={cn("flex items-center", selectedSize.spacing, className)}>
-      <div className={cn("relative", selectedSize.container)}>
-        {/* Nest/Home base */}
-        <Home 
-          className={cn(
-            selectedSize.logo, 
-            "text-primary absolute top-0 left-0 transform -rotate-6"
-          )} 
-        />
-        
-        {/* Feather for design */}
-        <Feather 
-          className={cn(
-            selectedSize.logo, 
-            "text-secondary absolute top-0 left-0 transform rotate-12 translate-x-1"
-          )} 
-        />
-        
-        {/* Palette for creativity/design */}
-        <Palette 
-          className={cn(
-            selectedSize.logo, 
-            "text-accent absolute top-0 left-0 transform rotate-0 translate-x-0.5 translate-y-0.5"
-          )} 
-          strokeWidth={1.5}
-        />
-      </div>
-      
-      {showText && (
-        <div className={cn("font-bold", selectedSize.text, "flex flex-col")}>
-          <span className="text-primary">Design</span>
-          <span className="text-secondary -mt-1.5">Nest</span>
+      {showDNOnly ? (
+        <div className={cn("font-bold", selectedSize.text, "flex")}>
+          <span className="text-primary">D</span>
+          <span className="text-secondary">N</span>
         </div>
+      ) : (
+        <>
+          <div className={cn("relative", selectedSize.container)}>
+            {/* Nest/Home base */}
+            <Home 
+              className={cn(
+                selectedSize.logo, 
+                "text-primary absolute top-0 left-0 transform -rotate-6"
+              )} 
+            />
+            
+            {/* Feather for design */}
+            <Feather 
+              className={cn(
+                selectedSize.logo, 
+                "text-secondary absolute top-0 left-0 transform rotate-12 translate-x-1"
+              )} 
+            />
+            
+            {/* Palette for creativity/design */}
+            <Palette 
+              className={cn(
+                selectedSize.logo, 
+                "text-accent absolute top-0 left-0 transform rotate-0 translate-x-0.5 translate-y-0.5"
+              )} 
+              strokeWidth={1.5}
+            />
+          </div>
+          
+          {showText && (
+            <div className={cn("font-bold", selectedSize.text, "flex flex-col")}>
+              <span className="text-primary">Design</span>
+              <span className="text-secondary -mt-1.5">Nest</span>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

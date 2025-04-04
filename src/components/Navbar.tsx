@@ -1,5 +1,5 @@
 
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, LogOutIcon } from 'lucide-react';
+import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, LogOutIcon, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 
@@ -20,6 +20,10 @@ interface NavbarProps {
 const Navbar = ({ logo }: NavbarProps) => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if we're on a page that needs a back button
+  const needsBackButton = ['/verify-otp', '/create-password', '/architect-profile'].includes(location.pathname);
   
   const handleLogout = () => {
     logout();
@@ -29,11 +33,21 @@ const Navbar = ({ logo }: NavbarProps) => {
       description: "You have been successfully logged out.",
     });
   };
+
+  const handleBack = () => {
+    navigate(-1);
+  };
   
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
+          {needsBackButton && (
+            <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
+              <ArrowLeft className="h-4 w-4" />
+              <span className="sr-only">Back</span>
+            </Button>
+          )}
           <Link to="/" className="flex items-center gap-2">
             {logo ? (
               logo

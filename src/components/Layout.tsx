@@ -7,7 +7,7 @@ import DesignNestLogo from './DesignNestLogo';
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar logo={<DesignNestLogo />} />
+      <Navbar logo={<DesignNestLogo showDNOnly size="md" />} />
       <main className="flex-1">
         {children}
       </main>

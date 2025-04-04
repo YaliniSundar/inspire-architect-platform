@@ -1,9 +1,105 @@
 
 import { toast } from "@/components/ui/use-toast";
 
-// This would be stored in a real database in production
-const inMemoryOtpStorage: Record<string, { otp: string, expiresAt: number }> = {};
-const inMemoryUsers: Record<string, any> = {};
+// This would be replaced with a real database in production
+// Mock database implementation
+class MockDatabase {
+  private otpStorage: Record<string, { otp: string, expiresAt: number }> = {};
+  private users: Record<string, any> = {};
+  
+  // Generate a unique ID
+  generateId(): string {
+    return `user_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  }
+  
+  // Store an OTP
+  storeOTP(email: string, otp: string, expiresInMinutes: number = 15): void {
+    const expiresAt = Date.now() + expiresInMinutes * 60 * 1000;
+    this.otpStorage[email] = { otp, expiresAt };
+  }
+  
+  // Verify an OTP
+  verifyOTP(email: string, otp: string): boolean {
+    const storedData = this.otpStorage[email];
+    
+    if (!storedData) {
+      return false;
+    }
+    
+    const { otp: storedOtp, expiresAt } = storedData;
+    
+    // Check if OTP is valid and not expired
+    if (storedOtp === otp && expiresAt > Date.now()) {
+      // Remove the used OTP from storage
+      delete this.otpStorage[email];
+      return true;
+    }
+    
+    return false;
+  }
+  
+  // Create a user
+  createUser(userData: any): string | null {
+    const { email } = userData;
+    
+    // Check if user already exists
+    if (this.users[email]) {
+      return null;
+    }
+    
+    // Generate a unique ID
+    const userId = this.generateId();
+    
+    // Save user data
+    this.users[email] = {
+      ...userData,
+      id: userId,
+      createdAt: new Date().toISOString()
+    };
+    
+    console.log(`[DB] User created: ${email}`, this.users[email]);
+    
+    return userId;
+  }
+  
+  // Get a user by email
+  getUserByEmail(email: string): any {
+    return this.users[email] || null;
+  }
+  
+  // Get all users
+  getAllUsers(): any[] {
+    return Object.values(this.users);
+  }
+  
+  // Update a user
+  updateUser(email: string, updates: any): boolean {
+    if (!this.users[email]) {
+      return false;
+    }
+    
+    this.users[email] = {
+      ...this.users[email],
+      ...updates,
+      updatedAt: new Date().toISOString()
+    };
+    
+    return true;
+  }
+  
+  // Delete a user
+  deleteUser(email: string): boolean {
+    if (!this.users[email]) {
+      return false;
+    }
+    
+    delete this.users[email];
+    return true;
+  }
+}
+
+// Create a single instance of the database
+const db = new MockDatabase();
 
 // Helper to generate a random OTP
 const generateOTP = (length: number = 6): string => {
@@ -22,8 +118,7 @@ export const sendOTPEmail = async (email: string): Promise<boolean> => {
     const otp = generateOTP(6);
     
     // Store OTP with expiration (15 minutes)
-    const expiresAt = Date.now() + 15 * 60 * 1000;
-    inMemoryOtpStorage[email] = { otp, expiresAt };
+    db.storeOTP(email, otp, 15);
     
     // In a real application, this would send an actual email
     // For demo purposes, we'll log it to the console and show a toast
@@ -45,47 +140,14 @@ export const sendOTPEmail = async (email: string): Promise<boolean> => {
 
 // Service to verify an OTP
 export const verifyOTP = (email: string, otp: string): boolean => {
-  const storedData = inMemoryOtpStorage[email];
-  
-  if (!storedData) {
-    return false;
-  }
-  
-  const { otp: storedOtp, expiresAt } = storedData;
-  
-  // Check if OTP is valid and not expired
-  if (storedOtp === otp && expiresAt > Date.now()) {
-    // Remove the used OTP from storage
-    delete inMemoryOtpStorage[email];
-    return true;
-  }
-  
-  return false;
+  return db.verifyOTP(email, otp);
 };
 
 // Service to register a new user
 export const registerUser = (userData: any): boolean => {
   try {
-    const { email } = userData;
-    
-    // Check if user already exists
-    if (inMemoryUsers[email]) {
-      return false;
-    }
-    
-    // Generate a unique ID (in production, this would be handled by the database)
-    const userId = `user_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    
-    // Save user data (in production, this would go to a database)
-    inMemoryUsers[email] = {
-      ...userData,
-      id: userId,
-      createdAt: new Date().toISOString()
-    };
-    
-    console.log(`[DEMO] User registered: ${email}`, inMemoryUsers[email]);
-    
-    return true;
+    const userId = db.createUser(userData);
+    return userId !== null;
   } catch (error) {
     console.error("Error registering user:", error);
     return false;
@@ -94,7 +156,7 @@ export const registerUser = (userData: any): boolean => {
 
 // Service to authenticate a user
 export const loginUser = (email: string, password: string): any => {
-  const user = inMemoryUsers[email];
+  const user = db.getUserByEmail(email);
   
   if (!user || user.password !== password) {
     return null;
@@ -107,8 +169,27 @@ export const loginUser = (email: string, password: string): any => {
 
 // Get all registered users (for demo/admin purposes)
 export const getAllUsers = (): any[] => {
-  return Object.values(inMemoryUsers).map(user => {
+  return db.getAllUsers().map(user => {
     const { password, ...safeUser } = user;
     return safeUser;
   });
+};
+
+// Update user profile
+export const updateUserProfile = (email: string, profileData: any): boolean => {
+  return db.updateUser(email, profileData);
+};
+
+// Get user by ID
+export const getUserById = (userId: string): any | null => {
+  const allUsers = db.getAllUsers();
+  const user = allUsers.find(user => user.id === userId);
+  
+  if (!user) {
+    return null;
+  }
+  
+  // Return user data without sensitive information
+  const { password, ...safeUserData } = user;
+  return safeUserData;
 };
