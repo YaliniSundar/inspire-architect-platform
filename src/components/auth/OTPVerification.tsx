@@ -2,14 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { toast } from '@/components/ui/use-toast';
-import { sendOTPEmail, verifyOTP } from '@/services/authService';
+import { sendVerificationEmail, verifyEmail } from '@/services/authService';
 import { ArrowLeft } from 'lucide-react';
+import { Mail } from 'lucide-react';
 
 const OTPVerification = () => {
   const navigate = useNavigate();
-  const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(60);
   const [signupData, setSignupData] = useState<any>(null);
@@ -23,11 +22,11 @@ const OTPVerification = () => {
     }
     setSignupData(JSON.parse(data));
     
-    // Send OTP email on component mount
+    // Send verification email on component mount
     const userData = JSON.parse(data);
-    sendOTPEmail(userData.email);
+    sendVerificationEmail(userData.email);
     
-    // Start countdown for resend code
+    // Start countdown for resend email
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -41,64 +40,48 @@ const OTPVerification = () => {
     return () => clearInterval(timer);
   }, [navigate]);
   
-  const handleVerifyOTP = async () => {
-    if (otp.length !== 6) {
-      toast({
-        title: "Invalid OTP",
-        description: "Please enter the complete 6-digit code.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    setIsLoading(true);
-    
-    try {
-      // Verify OTP with our service
-      const isValid = verifyOTP(signupData.email, otp);
-      
-      if (isValid) {
-        // Navigate to set password
-        navigate('/create-password');
-        
-        toast({
-          title: "Verification successful",
-          description: "Please create a password for your account.",
-        });
-      } else {
-        throw new Error('Invalid verification code');
-      }
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Verification failed",
-        description: "The code you entered is incorrect or has expired.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  const handleResendOTP = () => {
+  const handleResendVerification = () => {
     if (countdown > 0) return;
     
     // Reset countdown
     setCountdown(60);
     
-    // Resend OTP
+    // Resend verification email
     if (signupData?.email) {
-      sendOTPEmail(signupData.email);
+      sendVerificationEmail(signupData.email);
       
       toast({
-        title: "OTP Resent",
-        description: "A new verification code has been sent to your email.",
+        title: "Verification Email Resent",
+        description: "A new verification email has been sent to your email address.",
       });
     }
   };
 
   const handleGoBack = () => {
     navigate('/signup');
+  };
+  
+  // This is just for demo purposes to simulate email verification
+  // In a real app, this button wouldn't exist - user would click link in email
+  const handleSimulateVerification = () => {
+    setIsLoading(true);
+    
+    if (signupData?.email) {
+      // Simulate verification
+      verifyEmail(signupData.email);
+      
+      // Navigate to set password
+      setTimeout(() => {
+        navigate('/create-password');
+        
+        toast({
+          title: "Email verified successfully",
+          description: "Please create a password for your account.",
+        });
+        
+        setIsLoading(false);
+      }, 1500);
+    }
   };
   
   return (
@@ -109,45 +92,48 @@ const OTPVerification = () => {
         </Button>
         <div className="text-center flex-1">
           <p className="text-muted-foreground mb-2">
-            Enter the 6-digit code sent to 
+            Verification email sent to 
             <span className="font-medium text-foreground"> {signupData?.email}</span>
           </p>
         </div>
       </div>
       
-      <div className="flex justify-center mb-6">
-        <InputOTP 
-          maxLength={6}
-          value={otp}
-          onChange={setOtp}
-          render={({ slots }) => (
-            <InputOTPGroup>
-              {slots.map((slot, i) => (
-                <InputOTPSlot key={i} {...slot} index={i} />
-              ))}
-            </InputOTPGroup>
-          )}
-        />
+      <div className="flex flex-col items-center justify-center py-6 space-y-4">
+        <div className="bg-blue-50 p-4 rounded-full">
+          <Mail className="h-10 w-10 text-blue-500" />
+        </div>
+        <h3 className="text-lg font-medium text-center">Check your email</h3>
+        <p className="text-center text-muted-foreground max-w-sm">
+          We've sent a verification link to your email address. 
+          Please check your inbox and click the link to verify your account.
+        </p>
       </div>
-      
-      <Button 
-        onClick={handleVerifyOTP} 
-        className="w-full" 
-        disabled={otp.length !== 6 || isLoading}
-      >
-        {isLoading ? "Verifying..." : "Verify Code"}
-      </Button>
       
       <div className="text-center mt-4">
         <Button 
           variant="link" 
-          onClick={handleResendOTP}
+          onClick={handleResendVerification}
           disabled={countdown > 0}
           className="text-sm"
         >
           {countdown > 0 
-            ? `Resend code in ${countdown}s` 
-            : "Resend code"}
+            ? `Resend email in ${countdown}s` 
+            : "Resend verification email"}
+        </Button>
+      </div>
+      
+      {/* This button is for demo purposes only - in a real app, users would click the email link */}
+      <div className="mt-6 border-t pt-6">
+        <p className="text-xs text-center text-muted-foreground mb-4">
+          ⚠️ Demo Mode: In a real app, you would verify by clicking the link in your email.
+        </p>
+        <Button 
+          onClick={handleSimulateVerification} 
+          variant="outline"
+          className="w-full" 
+          disabled={isLoading}
+        >
+          {isLoading ? "Verifying..." : "Simulate Email Verification"}
         </Button>
       </div>
     </div>

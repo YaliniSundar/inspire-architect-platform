@@ -8,7 +8,7 @@ const VerifyOTPPage = () => {
   return (
     <AuthWrapper 
       title="Verify your email" 
-      description="We've sent a verification code to your email address."
+      description="We've sent a verification link to your email address."
       logo={<DesignNestLogo showDNOnly size="lg" />}
     >
       <OTPVerification />

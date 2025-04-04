@@ -5,6 +5,7 @@ import { toast } from "@/components/ui/use-toast";
 // Mock database implementation
 class MockDatabase {
   private otpStorage: Record<string, { otp: string, expiresAt: number }> = {};
+  private verificationStatus: Record<string, boolean> = {};
   private users: Record<string, any> = {};
   
   // Generate a unique ID
@@ -36,6 +37,16 @@ class MockDatabase {
     }
     
     return false;
+  }
+  
+  // Mark email as verified
+  markEmailAsVerified(email: string): void {
+    this.verificationStatus[email] = true;
+  }
+  
+  // Check if email is verified
+  isEmailVerified(email: string): boolean {
+    return this.verificationStatus[email] === true;
   }
   
   // Create a user
@@ -136,6 +147,39 @@ export const sendOTPEmail = async (email: string): Promise<boolean> => {
     console.error("Error sending OTP:", error);
     return false;
   }
+};
+
+// Service to send verification email
+export const sendVerificationEmail = async (email: string): Promise<boolean> => {
+  try {
+    // In a real application, this would send an actual email with a verification link
+    // For demo purposes, we'll log it to the console and show a toast
+    console.log(`[DEMO] Verification email sent to: ${email}`);
+    
+    // Show a toast for demo purposes only
+    toast({
+      title: "Demo Mode: Verification Email",
+      description: `A verification email would be sent to ${email} (In production, this would actually send an email)`,
+    });
+    
+    return true;
+  } catch (error) {
+    console.error("Error sending verification email:", error);
+    return false;
+  }
+};
+
+// Service to verify an email
+export const verifyEmail = (email: string): boolean => {
+  // Mark the email as verified in the database
+  db.markEmailAsVerified(email);
+  console.log(`[DEMO] Email verified: ${email}`);
+  return true;
+};
+
+// Service to check if an email is verified
+export const isEmailVerified = (email: string): boolean => {
+  return db.isEmailVerified(email);
 };
 
 // Service to verify an OTP

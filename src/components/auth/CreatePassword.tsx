@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
-import { registerUser } from '@/services/authService';
+import { registerUser, isEmailVerified } from '@/services/authService';
 import { useAuth } from '@/contexts/AuthContext';
 
 const passwordSchema = z.object({
@@ -38,7 +38,19 @@ const CreatePassword = () => {
       navigate('/signup');
       return;
     }
-    setSignupData(JSON.parse(data));
+    
+    const parsedData = JSON.parse(data);
+    setSignupData(parsedData);
+    
+    // Check if email is verified
+    if (parsedData.email && !isEmailVerified(parsedData.email)) {
+      navigate('/verify-otp');
+      toast({
+        title: "Email not verified",
+        description: "Please verify your email before setting a password.",
+        variant: "destructive",
+      });
+    }
   }, [navigate]);
   
   const form = useForm<PasswordFormValues>({
