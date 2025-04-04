@@ -67,6 +67,8 @@ const InputOTPSlot = React.forwardRef<
           <div className="h-4 w-px animate-caret-blink bg-foreground duration-1000" />
         </div>
       )}
+      <span style={{ display: 'none' }} data-is-active={isActive ? 'true' : 'false'}></span>
+      <span style={{ display: 'none' }} data-has-fake-caret={hasFakeCaret ? 'true' : 'false'}></span>
     </div>
   )
 })

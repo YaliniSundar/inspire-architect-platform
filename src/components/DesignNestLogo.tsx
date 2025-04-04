@@ -30,8 +30,8 @@ const DesignNestLogo: React.FC<DesignNestLogoProps> = ({
     <div className={cn("flex items-center", selectedSize.spacing, className)}>
       {showDNOnly ? (
         <div className={cn("font-bold", selectedSize.text, "flex")}>
-          <span className="text-primary">D</span>
-          <span className="text-secondary">N</span>
+          <span className="text-blue-500">D</span>
+          <span className="text-green-500">N</span>
         </div>
       ) : (
         <>
@@ -64,8 +64,8 @@ const DesignNestLogo: React.FC<DesignNestLogoProps> = ({
           
           {showText && (
             <div className={cn("font-bold", selectedSize.text, "flex flex-col")}>
-              <span className="text-primary">Design</span>
-              <span className="text-secondary -mt-1.5">Nest</span>
+              <span className="text-blue-500">Design</span>
+              <span className="text-green-500 -mt-1.5">Nest</span>
             </div>
           )}
         </>
