@@ -64,24 +64,38 @@ const Navbar = ({ logo }: NavbarProps) => {
             <HomeIcon className="h-4 w-4" />
             Home
           </Link>
-          <Link to="/explore" className="flex items-center gap-2 text-sm font-medium">
-            <CompassIcon className="h-4 w-4" />
-            Explore
-          </Link>
-          <Link to="/ai-generator" className="flex items-center gap-2 text-sm font-medium">
-            <SparklesIcon className="h-4 w-4" />
-            AI Generator
-          </Link>
+          
+          {isAuthenticated ? (
+            <>
+              <Link to="/explore" className="flex items-center gap-2 text-sm font-medium">
+                <CompassIcon className="h-4 w-4" />
+                Explore
+              </Link>
+              <Link to="/ai-generator" className="flex items-center gap-2 text-sm font-medium">
+                <SparklesIcon className="h-4 w-4" />
+                AI Generator
+              </Link>
+            </>
+          ) : (
+            <Button variant="ghost" size="sm" asChild className="gap-2">
+              <Link to="/login">
+                <CompassIcon className="h-4 w-4" />
+                Explore Designs
+              </Link>
+            </Button>
+          )}
         </div>
 
-        <div className="hidden md:flex relative w-full max-w-sm items-center mx-4">
-          <SearchIcon className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search designs, architects..."
-            className="pl-8 bg-background"
-          />
-        </div>
+        {isAuthenticated && (
+          <div className="hidden md:flex relative w-full max-w-sm items-center mx-4">
+            <SearchIcon className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search designs, architects..."
+              className="pl-8 bg-background"
+            />
+          </div>
+        )}
 
         <div className="flex items-center gap-2">
           {isAuthenticated ? (

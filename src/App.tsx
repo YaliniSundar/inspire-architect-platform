@@ -39,16 +39,30 @@ const App = () => {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Layout><Index /></Layout>} />
-              <Route path="/explore" element={<Layout><Explore /></Layout>} />
               
               {/* Auth routes */}
               <Route path="/signup" element={<SignupPage />} />
               <Route path="/verify-otp" element={<VerifyOTPPage />} />
               <Route path="/create-password" element={<CreatePasswordPage />} />
-              <Route path="/architect-profile" element={<ArchitectProfilePage />} />
               <Route path="/login" element={<LoginPage />} />
               
-              {/* Protected routes */}
+              {/* Protected routes - require authentication */}
+              <Route 
+                path="/explore" 
+                element={
+                  <ProtectedRoute>
+                    <Layout><Explore /></Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/architect-profile" 
+                element={
+                  <ProtectedRoute>
+                    <Layout><ArchitectProfilePage /></Layout>
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="/profile/:id" 
                 element={
@@ -60,7 +74,9 @@ const App = () => {
               <Route 
                 path="/design/:id" 
                 element={
-                  <Layout><DesignDetail /></Layout>
+                  <ProtectedRoute>
+                    <Layout><DesignDetail /></Layout>
+                  </ProtectedRoute>
                 } 
               />
               <Route 

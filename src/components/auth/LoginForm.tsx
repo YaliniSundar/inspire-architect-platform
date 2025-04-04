@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -20,8 +20,12 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
+  
+  // Get the redirect path from location state, or default to home
+  const from = (location.state as any)?.from?.pathname || '/';
   
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -47,7 +51,8 @@ const LoginForm = () => {
           userType: user.userType as 'homeowner' | 'architect'
         });
         
-        navigate('/');
+        // Navigate to the page they were trying to access, or home
+        navigate(from, { replace: true });
         
         toast({
           title: "Login successful",
