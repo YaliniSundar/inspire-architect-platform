@@ -12,6 +12,7 @@ import Profile from "./pages/Profile";
 import DesignDetail from "./pages/DesignDetail";
 import AIGenerator from "./pages/AIGenerator";
 import Layout from "./components/Layout";
+import SettingsPage from "./pages/SettingsPage";
 
 // Auth pages
 import SignupPage from "./pages/SignupPage";
@@ -84,6 +85,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <Layout><AIGenerator /></Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/settings" 
+                element={
+                  <ProtectedRoute>
+                    <Layout><SettingsPage /></Layout>
                   </ProtectedRoute>
                 } 
               />
