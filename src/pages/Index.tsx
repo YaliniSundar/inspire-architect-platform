@@ -112,6 +112,9 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-medium mb-2">Discover Designs</h3>
               <p className="text-muted-foreground">Browse thousands of architectural designs to find inspiration for your dream home.</p>
+              <Button variant="link" asChild className="mt-2">
+                <Link to="/explore">Explore Designs</Link>
+              </Button>
             </div>
             
             <div className="bg-background rounded-lg p-6 text-center shadow-sm">
@@ -120,6 +123,9 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-medium mb-2">Connect with Architects</h3>
               <p className="text-muted-foreground">Find and hire professional architects to bring your vision to life.</p>
+              <Button variant="link" asChild className="mt-2">
+                <Link to="/architects">Find Architects</Link>
+              </Button>
             </div>
             
             <div className="bg-background rounded-lg p-6 text-center shadow-sm">
@@ -128,6 +134,9 @@ const Index = () => {
               </div>
               <h3 className="text-xl font-medium mb-2">AI Generation</h3>
               <p className="text-muted-foreground">Generate architectural concept designs from your text descriptions using AI.</p>
+              <Button variant="link" asChild className="mt-2">
+                <Link to="/ai-generator">Try AI Generator</Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -171,7 +180,26 @@ const Index = () => {
             <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
               Showcase your portfolio, connect with potential clients, and grow your architectural practice.
             </p>
-            <Button size="lg">Join as an Architect</Button>
+            <Button size="lg" asChild>
+              <Link to="/signup">Join as an Architect</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+      
+      {/* Footer Links */}
+      <section className="py-8 bg-muted/30 mt-auto">
+        <div className="container">
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+            <Link to="/terms-of-service" className="hover:text-primary transition-colors">
+              Terms of Service
+            </Link>
+            <Link to="/privacy-policy" className="hover:text-primary transition-colors">
+              Privacy Policy
+            </Link>
+            <Link to="/cookie-policy" className="hover:text-primary transition-colors">
+              Cookie Policy
+            </Link>
           </div>
         </div>
       </section>

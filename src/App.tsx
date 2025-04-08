@@ -13,6 +13,10 @@ import DesignDetail from "./pages/DesignDetail";
 import AIGenerator from "./pages/AIGenerator";
 import Layout from "./components/Layout";
 import SettingsPage from "./pages/SettingsPage";
+import TermsOfServicePage from "./pages/TermsOfServicePage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import CookiePolicyPage from "./pages/CookiePolicyPage";
+import ArchitectsListPage from "./pages/ArchitectsListPage";
 
 // Auth pages
 import SignupPage from "./pages/SignupPage";
@@ -40,6 +44,9 @@ const App = () => {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Layout><Index /></Layout>} />
+              <Route path="/terms-of-service" element={<Layout><TermsOfServicePage /></Layout>} />
+              <Route path="/privacy-policy" element={<Layout><PrivacyPolicyPage /></Layout>} />
+              <Route path="/cookie-policy" element={<Layout><CookiePolicyPage /></Layout>} />
               
               {/* Auth routes */}
               <Route path="/signup" element={<SignupPage />} />
@@ -53,6 +60,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <Layout><Explore /></Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/architects" 
+                element={
+                  <ProtectedRoute>
+                    <Layout><ArchitectsListPage /></Layout>
                   </ProtectedRoute>
                 } 
               />
