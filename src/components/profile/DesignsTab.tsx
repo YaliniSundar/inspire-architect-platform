@@ -50,13 +50,18 @@ const DesignsTab = ({ profileId, isOwnProfile, userType, designs, onAddDesign }:
           </p>
           {isOwnProfile && userType === 'architect' && (
             <div className="mt-4">
-              {/* Remove children prop here */}
-              <UploadDesign onUploadSuccess={onAddDesign}>
-                <Button className="flex items-center gap-2">
-                  <PlusCircle className="h-4 w-4" />
-                  Add Your First Design
-                </Button>
-              </UploadDesign>
+              <Button 
+                className="flex items-center gap-2"
+                onClick={() => {
+                  const uploadBtn = document.querySelector('[data-upload-trigger]');
+                  if (uploadBtn instanceof HTMLElement) {
+                    uploadBtn.click();
+                  }
+                }}
+              >
+                <PlusCircle className="h-4 w-4" />
+                Add Your First Design
+              </Button>
             </div>
           )}
         </div>

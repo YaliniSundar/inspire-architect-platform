@@ -1,3 +1,4 @@
+
 import { useState, ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { 
@@ -119,7 +120,7 @@ const UploadDesign = ({ onUploadSuccess, children }: UploadDesignProps) => {
   
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+      <DialogTrigger asChild data-upload-trigger>
         {children || <Button>Upload New Design</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
