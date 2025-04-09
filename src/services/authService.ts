@@ -200,15 +200,28 @@ export const registerUser = (userData: any): boolean => {
 
 // Service to authenticate a user
 export const loginUser = (email: string, password: string): any => {
-  const user = db.getUserByEmail(email);
-  
-  if (!user || user.password !== password) {
+  try {
+    const user = db.getUserByEmail(email);
+    
+    if (!user) {
+      console.log(`[AUTH] Login failed: User with email ${email} not found`);
+      return null;
+    }
+    
+    if (user.password !== password) {
+      console.log(`[AUTH] Login failed: Incorrect password for ${email}`);
+      return null;
+    }
+    
+    console.log(`[AUTH] Login successful for ${email}`);
+    
+    // Return user data without sensitive information
+    const { password: _, ...safeUserData } = user;
+    return safeUserData;
+  } catch (error) {
+    console.error("Error during login:", error);
     return null;
   }
-  
-  // Return user data without sensitive information
-  const { password: _, ...safeUserData } = user;
-  return safeUserData;
 };
 
 // Get all registered users (for demo/admin purposes)

@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { loginUser } from '@/services/authService';
 import { useAuth } from '@/contexts/AuthContext';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -22,9 +23,10 @@ const LoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   
-  // Get the redirect path from location state, or default to home
+  // Get the redirect path from location state, or default to role-based dashboard
   const from = (location.state as any)?.from?.pathname || '/';
   
   const form = useForm<LoginFormValues>({
@@ -51,8 +53,11 @@ const LoginForm = () => {
           userType: user.userType as 'homeowner' | 'architect'
         });
         
-        // Navigate to the page they were trying to access, or home
-        navigate(from, { replace: true });
+        // Determine where to navigate based on user role
+        const dashboardPath = user.userType === 'architect' ? '/architect-dashboard' : '/homeowner-dashboard';
+        
+        // Navigate to the page they were trying to access, or role-specific dashboard
+        navigate(from !== '/' ? from : dashboardPath, { replace: true });
         
         toast({
           title: "Login successful",
@@ -72,6 +77,8 @@ const LoginForm = () => {
       setIsLoading(false);
     }
   };
+  
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
   
   return (
     <Form {...form}>
@@ -102,7 +109,29 @@ const LoginForm = () => {
                 </Link>
               </div>
               <FormControl>
-                <Input type="password" placeholder="Enter your password" {...field} />
+                <div className="relative">
+                  <Input 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="Enter your password" 
+                    {...field} 
+                  />
+                  <Button 
+                    type="button"
+                    variant="ghost" 
+                    size="sm" 
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? (
+                      <EyeOffIcon className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="sr-only">
+                      {showPassword ? "Hide password" : "Show password"}
+                    </span>
+                  </Button>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, LogOutIcon, ArrowLeft } from 'lucide-react';
+import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, LogOutIcon, ArrowLeft, BookmarkIcon, UsersIcon, ImageIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 
@@ -37,6 +37,9 @@ const Navbar = ({ logo }: NavbarProps) => {
   const handleBack = () => {
     navigate(-1);
   };
+
+  // Determine if user is architect or homeowner
+  const isArchitect = user?.userType === 'architect';
   
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -67,14 +70,35 @@ const Navbar = ({ logo }: NavbarProps) => {
           
           {isAuthenticated ? (
             <>
-              <Link to="/explore" className="flex items-center gap-2 text-sm font-medium">
-                <CompassIcon className="h-4 w-4" />
-                Explore
-              </Link>
-              <Link to="/ai-generator" className="flex items-center gap-2 text-sm font-medium">
-                <SparklesIcon className="h-4 w-4" />
-                AI Generator
-              </Link>
+              {isArchitect ? (
+                // Architect navigation
+                <>
+                  <Link to="/architect-dashboard" className="flex items-center gap-2 text-sm font-medium">
+                    <ImageIcon className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                  <Link to="/explore" className="flex items-center gap-2 text-sm font-medium">
+                    <CompassIcon className="h-4 w-4" />
+                    Explore
+                  </Link>
+                </>
+              ) : (
+                // Homeowner navigation
+                <>
+                  <Link to="/homeowner-dashboard" className="flex items-center gap-2 text-sm font-medium">
+                    <BookmarkIcon className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                  <Link to="/architects" className="flex items-center gap-2 text-sm font-medium">
+                    <UsersIcon className="h-4 w-4" />
+                    Architects
+                  </Link>
+                  <Link to="/ai-generator" className="flex items-center gap-2 text-sm font-medium">
+                    <SparklesIcon className="h-4 w-4" />
+                    AI Generator
+                  </Link>
+                </>
+              )}
             </>
           ) : (
             <Button variant="ghost" size="sm" asChild className="gap-2">
@@ -91,7 +115,7 @@ const Navbar = ({ logo }: NavbarProps) => {
             <SearchIcon className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search designs, architects..."
+              placeholder={isArchitect ? "Search designs, architects..." : "Search for inspiration..."}
               className="pl-8 bg-background"
             />
           </div>

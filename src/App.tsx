@@ -17,6 +17,8 @@ import TermsOfServicePage from "./pages/TermsOfServicePage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import CookiePolicyPage from "./pages/CookiePolicyPage";
 import ArchitectsListPage from "./pages/ArchitectsListPage";
+import HomeownerDashboard from "./pages/HomeownerDashboard";
+import ArchitectDashboard from "./pages/ArchitectDashboard";
 
 // Auth pages
 import SignupPage from "./pages/SignupPage";
@@ -55,6 +57,22 @@ const App = () => {
               <Route path="/login" element={<LoginPage />} />
               
               {/* Protected routes - require authentication */}
+              <Route 
+                path="/homeowner-dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Layout><HomeownerDashboard /></Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/architect-dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <Layout><ArchitectDashboard /></Layout>
+                  </ProtectedRoute>
+                } 
+              />
               <Route 
                 path="/explore" 
                 element={
