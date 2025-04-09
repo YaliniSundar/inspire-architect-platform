@@ -56,7 +56,7 @@ const LoginForm = () => {
         
         toast({
           title: "Login successful",
-          description: "Welcome back to Design Next!",
+          description: `Welcome back to Design Next! You're logged in as a ${user.userType}.`,
         });
       } else {
         throw new Error('Invalid email or password');
@@ -112,15 +112,6 @@ const LoginForm = () => {
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? "Signing in..." : "Sign in"}
         </Button>
-        
-        <div className="text-center mt-4">
-          <p className="text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-primary hover:underline">
-              Sign up
-            </Link>
-          </p>
-        </div>
       </form>
     </Form>
   );

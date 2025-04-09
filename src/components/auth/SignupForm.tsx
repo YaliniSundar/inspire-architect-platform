@@ -31,7 +31,7 @@ const SignupForm = () => {
       name: '',
       email: '',
       phone: '',
-      userType: 'homeowner',
+      userType: 'homeowner', // Default to homeowner
     },
   });
 
@@ -41,6 +41,17 @@ const SignupForm = () => {
     try {
       // In a real application, you would call an API here
       console.log('Signup data:', data);
+      
+      // Add a note about the role being permanent
+      const roleMessage = data.userType === 'homeowner' 
+        ? "You're signing up as a Homeowner. This role cannot be changed later."
+        : "You're signing up as an Architect. This role cannot be changed later.";
+        
+      toast({
+        title: "Note about your selected role",
+        description: roleMessage,
+        duration: 5000,
+      });
       
       // Mock API call success
       setTimeout(() => {
@@ -129,7 +140,7 @@ const SignupForm = () => {
                       <RadioGroupItem value="homeowner" />
                     </FormControl>
                     <FormLabel className="font-normal">
-                      Home Owner
+                      Home Owner <span className="text-xs text-muted-foreground ml-1">(This role cannot be changed later)</span>
                     </FormLabel>
                   </FormItem>
                   <FormItem className="flex items-center space-x-3 space-y-0">
@@ -137,7 +148,7 @@ const SignupForm = () => {
                       <RadioGroupItem value="architect" />
                     </FormControl>
                     <FormLabel className="font-normal">
-                      Architect
+                      Architect <span className="text-xs text-muted-foreground ml-1">(This role cannot be changed later)</span>
                     </FormLabel>
                   </FormItem>
                 </RadioGroup>
