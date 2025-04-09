@@ -50,6 +50,7 @@ const DesignsTab = ({ profileId, isOwnProfile, userType, designs, onAddDesign }:
           </p>
           {isOwnProfile && userType === 'architect' && (
             <div className="mt-4">
+              {/* Remove children prop here */}
               <UploadDesign onUploadSuccess={onAddDesign}>
                 <Button className="flex items-center gap-2">
                   <PlusCircle className="h-4 w-4" />

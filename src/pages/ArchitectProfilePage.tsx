@@ -48,9 +48,10 @@ const ArchitectProfilePage = () => {
       title="Complete your architect profile" 
       description="Tell us more about your professional background to showcase your expertise to potential clients."
     >
+      {/* Here we need to spread the props as expected by ArchitectProfileForm */}
       <ArchitectProfileForm 
-        onSubmit={handleProfileComplete}
-        isSubmitting={isSubmitting}
+        onFormSubmit={handleProfileComplete}
+        isLoading={isSubmitting}
       />
     </AuthWrapper>
   );

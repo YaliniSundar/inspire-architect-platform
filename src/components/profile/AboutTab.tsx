@@ -4,9 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Card } from "@/components/ui/card";
+import { Link } from 'react-router-dom';
 
 interface AboutTabProps {
   profile: {
+    id?: string; // Make id optional but available
     about: string;
     education: { degree: string; institution: string; year: string }[];
     awards: { name: string; year: string }[];
@@ -127,7 +129,11 @@ const AboutTab = ({ profile }: AboutTabProps) => {
           <h3 className="text-lg font-medium mb-4">Hire for a Project</h3>
           <p className="text-sm text-muted-foreground mb-4">Interested in working with {profile.name.split(' ')[0]}? Get in touch to discuss your project.</p>
           <Button className="w-full" asChild>
-            <Link to={`/hire/${profile.id}`}>Start a Project</Link>
+            {profile.id ? (
+              <Link to={`/hire/${profile.id}`}>Start a Project</Link>
+            ) : (
+              <Link to="/architects">Find Architects</Link>
+            )}
           </Button>
           <Separator className="my-4" />
           <Button variant="outline" className="w-full">

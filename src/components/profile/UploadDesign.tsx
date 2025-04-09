@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 import { useForm } from 'react-hook-form';
 import { 
   Dialog,
@@ -27,9 +26,10 @@ import { toast } from '@/components/ui/use-toast';
 
 interface UploadDesignProps {
   onUploadSuccess?: (design: any) => void;
+  children?: ReactNode;
 }
 
-const UploadDesign = ({ onUploadSuccess }: UploadDesignProps) => {
+const UploadDesign = ({ onUploadSuccess, children }: UploadDesignProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -120,7 +120,7 @@ const UploadDesign = ({ onUploadSuccess }: UploadDesignProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Upload New Design</Button>
+        {children || <Button>Upload New Design</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>

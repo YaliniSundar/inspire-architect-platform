@@ -1,4 +1,3 @@
-
 // Mock profiles data - would come from an API in a real app
 export const MOCK_PROFILES = {
   'a1': {
@@ -24,7 +23,28 @@ export const MOCK_PROFILES = {
     contact: {
       email: 'sarah.johnson@designnext.com',
       website: 'www.sarahjohnsonarchitect.com'
-    }
+    },
+    reviews: [
+      {
+        id: 'r1',
+        authorName: 'David Miller',
+        authorAvatar: 'https://randomuser.me/api/portraits/men/75.jpg',
+        rating: 5,
+        date: 'March 2023',
+        comment: 'Sarah designed our dream home! Her attention to detail and ability to translate our ideas into a beautiful, functional design was impressive. She was responsive and worked within our budget constraints.',
+        projectTitle: 'Modern Family Home'
+      },
+      {
+        id: 'r2',
+        authorName: 'Maria Garcia',
+        authorAvatar: 'https://randomuser.me/api/portraits/women/63.jpg',
+        rating: 4,
+        date: 'January 2023',
+        comment: 'We hired Sarah for our kitchen renovation and couldn\'t be happier with the results. She has a great eye for balancing aesthetics with practicality.',
+        projectTitle: 'Kitchen Renovation'
+      }
+    ],
+    availableForHire: true
   },
   'a2': {
     id: 'a2',
@@ -49,7 +69,19 @@ export const MOCK_PROFILES = {
     contact: {
       email: 'michael.chen@designnext.com',
       website: 'www.michaelchendesign.com'
-    }
+    },
+    reviews: [
+      {
+        id: 'r3',
+        authorName: 'Jennifer Taylor',
+        authorAvatar: 'https://randomuser.me/api/portraits/women/32.jpg',
+        rating: 5,
+        date: 'April 2023',
+        comment: 'Michael transformed our outdated office space into a modern, collaborative environment. His knowledge of urban design principles and attention to our company culture made the project a huge success.',
+        projectTitle: 'Office Renovation'
+      }
+    ],
+    availableForHire: true
   },
 };
 
