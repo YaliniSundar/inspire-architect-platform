@@ -1,9 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -20,26 +19,12 @@ const architectProfileSchema = z.object({
 
 type ArchitectProfileFormValues = z.infer<typeof architectProfileSchema>;
 
-const ArchitectProfileForm = () => {
-  const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
-  
-  useEffect(() => {
-    // Check if user was redirected from registration
-    const tempUserId = sessionStorage.getItem('tempUserId');
-    if (!tempUserId) {
-      navigate('/signup');
-      return;
-    }
-    
-    // In a real app, you'd fetch user data from API using this ID
-    const signupData = sessionStorage.getItem('signupData');
-    if (signupData) {
-      setUserData(JSON.parse(signupData));
-    }
-  }, [navigate]);
-  
+interface ArchitectProfileFormProps {
+  onFormSubmit: (data: ArchitectProfileFormValues) => Promise<void>;
+  isLoading: boolean;
+}
+
+const ArchitectProfileForm = ({ onFormSubmit, isLoading }: ArchitectProfileFormProps) => {
   const form = useForm<ArchitectProfileFormValues>({
     resolver: zodResolver(architectProfileSchema),
     defaultValues: {
@@ -52,41 +37,8 @@ const ArchitectProfileForm = () => {
   });
   
   const onSubmit = async (data: ArchitectProfileFormValues) => {
-    setIsLoading(true);
-    
     try {
-      // Combine all user data
-      const completeProfile = {
-        ...userData,
-        ...data,
-      };
-      
-      // In a real application, you would call an API to save architect profile
-      console.log('Saving architect profile:', completeProfile);
-      
-      // Mock successful profile creation
-      setTimeout(() => {
-        // Clear session storage
-        sessionStorage.removeItem('signupData');
-        sessionStorage.removeItem('tempUserId');
-        
-        // Save user data to localStorage (in a real app, you'd use proper auth)
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('user', JSON.stringify({
-          id: 'architect-123',
-          name: userData?.name,
-          email: userData?.email,
-          userType: 'architect',
-          profile: data
-        }));
-        
-        navigate('/');
-        
-        toast({
-          title: "Profile created successfully",
-          description: "Your architect profile is now complete.",
-        });
-      }, 1000);
+      await onFormSubmit(data);
     } catch (error) {
       console.error(error);
       toast({
@@ -94,8 +46,6 @@ const ArchitectProfileForm = () => {
         description: "There was a problem saving your profile. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
   
