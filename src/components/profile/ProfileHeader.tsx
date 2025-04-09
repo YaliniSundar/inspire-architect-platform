@@ -1,8 +1,9 @@
 
 import { Link, useNavigate } from 'react-router-dom';
-import { MapPinIcon, BriefcaseIcon, UsersIcon, SettingsIcon, MailIcon } from 'lucide-react';
+import { MapPinIcon, BriefcaseIcon, UsersIcon, SettingsIcon, MailIcon, CalendarIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 interface ProfileHeaderProps {
   profile: {
@@ -14,11 +15,14 @@ interface ProfileHeaderProps {
     location: string;
     yearsOfExperience: number;
     followers: number;
+    availableForHire?: boolean;
+    specialties?: string[];
   };
   isOwnProfile: boolean;
+  isArchitect?: boolean;
 }
 
-const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => {
+const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHeaderProps) => {
   const navigate = useNavigate();
   
   return (
@@ -42,7 +46,15 @@ const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => {
           </Avatar>
           
           <div className="flex-1 space-y-2">
-            <h1 className="text-3xl font-bold">{profile.name}</h1>
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-3xl font-bold">{profile.name}</h1>
+              {isArchitect && profile.availableForHire && (
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  Available for Hire
+                </Badge>
+              )}
+            </div>
+            
             <p className="text-muted-foreground">{profile.role}</p>
             
             <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
@@ -58,7 +70,23 @@ const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => {
                 <UsersIcon className="h-4 w-4" />
                 <span>{profile.followers.toLocaleString()} followers</span>
               </div>
+              <div className="flex items-center gap-1">
+                <CalendarIcon className="h-4 w-4" />
+                <span>Member since 2023</span>
+              </div>
             </div>
+
+            {/* Show specialties for architects */}
+            {isArchitect && profile.specialties && profile.specialties.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-2">
+                {profile.specialties.slice(0, 3).map((specialty, index) => (
+                  <Badge key={index} variant="outline">{specialty}</Badge>
+                ))}
+                {profile.specialties.length > 3 && (
+                  <Badge variant="outline">+{profile.specialties.length - 3} more</Badge>
+                )}
+              </div>
+            )}
           </div>
           
           <div className="flex gap-2 self-stretch md:self-auto">
@@ -70,10 +98,18 @@ const ProfileHeader = ({ profile, isOwnProfile }: ProfileHeaderProps) => {
             ) : (
               <>
                 <Button className="flex-1 md:flex-none" size="lg">Follow</Button>
-                <Button variant="outline" className="flex-1 md:flex-none" size="lg">
-                  <MailIcon className="h-4 w-4 mr-2" />
-                  Message
-                </Button>
+                {isArchitect ? (
+                  <Button variant="secondary" className="flex-1 md:flex-none" size="lg" asChild>
+                    <Link to={`/hire/${profile.id}`}>
+                      Hire Now
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" className="flex-1 md:flex-none" size="lg">
+                    <MailIcon className="h-4 w-4 mr-2" />
+                    Message
+                  </Button>
+                )}
               </>
             )}
           </div>

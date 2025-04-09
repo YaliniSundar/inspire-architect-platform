@@ -9,6 +9,7 @@ import AboutTab from '@/components/profile/AboutTab';
 import ReviewsTab from '@/components/profile/ReviewsTab';
 import { MOCK_PROFILES, MOCK_PROFILE_DESIGNS, ALL_DESIGNS } from '@/components/profile/ProfileData';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
 const Profile = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,27 @@ const Profile = () => {
   const likedItems = user?.likedItems
     ? ALL_DESIGNS.filter(design => user.likedItems?.includes(design.id))
     : [];
+
+  const [newDesigns, setNewDesigns] = useState(profileDesigns);
+  
+  // Handle adding a new design
+  const handleAddDesign = (design: any) => {
+    setNewDesigns(prev => [design, ...prev]);
+  };
+
+  // Determine if profile is for an architect or homeowner
+  const isArchitectProfile = profile?.role?.toLowerCase().includes('architect') || false;
+  
+  // Select the default tab based on user type
+  const getDefaultTab = () => {
+    if (isOwnProfile) {
+      return 'collections'; // Own profile shows collections first
+    } else if (isArchitectProfile) {
+      return 'designs'; // Architect profiles show designs first
+    } else {
+      return 'collections'; // Homeowner profiles show collections first
+    }
+  };
   
   if (!profile) {
     return (
@@ -43,24 +65,30 @@ const Profile = () => {
   
   return (
     <div>
-      <ProfileHeader profile={profile} isOwnProfile={isOwnProfile} />
+      <ProfileHeader 
+        profile={profile} 
+        isOwnProfile={isOwnProfile} 
+        isArchitect={isArchitectProfile}
+      />
       
       {/* Profile Tabs & Content */}
       <div className="container">
-        <Tabs defaultValue={isOwnProfile ? "collections" : "designs"} className="mb-12">
+        <Tabs defaultValue={getDefaultTab()} className="mb-12">
           <TabsList className="mb-6">
-            <TabsTrigger value="designs">Designs</TabsTrigger>
+            {isArchitectProfile && <TabsTrigger value="designs">Portfolio</TabsTrigger>}
+            {!isArchitectProfile && <TabsTrigger value="designs">Designs</TabsTrigger>}
             <TabsTrigger value="collections">Collections</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
-            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            {isArchitectProfile && <TabsTrigger value="reviews">Reviews</TabsTrigger>}
           </TabsList>
           
           <TabsContent value="designs">
             <DesignsTab 
               profileId={profile.id} 
               isOwnProfile={isOwnProfile} 
-              userType={user?.userType} 
-              designs={profileDesigns} 
+              userType={isArchitectProfile ? 'architect' : 'homeowner'} 
+              designs={newDesigns} 
+              onAddDesign={handleAddDesign}
             />
           </TabsContent>
           
@@ -75,9 +103,15 @@ const Profile = () => {
             <AboutTab profile={profile} />
           </TabsContent>
           
-          <TabsContent value="reviews">
-            <ReviewsTab />
-          </TabsContent>
+          {isArchitectProfile && (
+            <TabsContent value="reviews">
+              <ReviewsTab 
+                reviews={profile.reviews || []} 
+                isArchitect={isArchitectProfile} 
+                profileId={profile.id}
+              />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>

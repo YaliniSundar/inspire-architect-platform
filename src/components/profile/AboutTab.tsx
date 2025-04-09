@@ -1,6 +1,9 @@
 
-import { CalendarIcon, HeartIcon } from 'lucide-react';
+import { CalendarIcon, HeartIcon, BriefcaseIcon, GraduationCapIcon } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Card } from "@/components/ui/card";
 
 interface AboutTabProps {
   profile: {
@@ -13,6 +16,13 @@ interface AboutTabProps {
       website: string;
     };
     name: string;
+    projects?: { 
+      title: string; 
+      description: string;
+      year: string;
+      location?: string; 
+      imageUrl?: string;
+    }[];
   };
 }
 
@@ -31,7 +41,7 @@ const AboutTab = ({ profile }: AboutTabProps) => {
           <div className="space-y-4">
             {profile.education.map((edu, index) => (
               <div key={index} className="flex gap-3">
-                <CalendarIcon className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                <GraduationCapIcon className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
                   <h3 className="font-medium">{edu.degree}</h3>
                   <p className="text-sm text-muted-foreground">{edu.institution}, {edu.year}</p>
@@ -55,6 +65,37 @@ const AboutTab = ({ profile }: AboutTabProps) => {
             ))}
           </div>
         </div>
+        
+        {/* Featured Projects Section (for architects) */}
+        {profile.projects && profile.projects.length > 0 && (
+          <div>
+            <h2 className="text-xl font-medium mb-4">Featured Projects</h2>
+            <div className="space-y-6">
+              {profile.projects.map((project, index) => (
+                <Card key={index} className="p-4">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    {project.imageUrl && (
+                      <div className="md:w-1/3">
+                        <img 
+                          src={project.imageUrl} 
+                          alt={project.title} 
+                          className="w-full h-40 object-cover rounded-md"
+                        />
+                      </div>
+                    )}
+                    <div className={project.imageUrl ? "md:w-2/3" : "w-full"}>
+                      <h3 className="text-lg font-medium">{project.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {project.year}{project.location ? `, ${project.location}` : ''}
+                      </p>
+                      <p className="text-sm">{project.description}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Sidebar info */}
@@ -85,14 +126,18 @@ const AboutTab = ({ profile }: AboutTabProps) => {
         <div className="bg-background border rounded-lg p-6">
           <h3 className="text-lg font-medium mb-4">Hire for a Project</h3>
           <p className="text-sm text-muted-foreground mb-4">Interested in working with {profile.name.split(' ')[0]}? Get in touch to discuss your project.</p>
-          <Button className="w-full">Start a Project</Button>
+          <Button className="w-full" asChild>
+            <Link to={`/hire/${profile.id}`}>Start a Project</Link>
+          </Button>
+          <Separator className="my-4" />
+          <Button variant="outline" className="w-full">
+            <BriefcaseIcon className="h-4 w-4 mr-2" />
+            View Full Portfolio
+          </Button>
         </div>
       </div>
     </div>
   );
 };
-
-// Add missing Button import
-import { Button } from "@/components/ui/button";
 
 export default AboutTab;
