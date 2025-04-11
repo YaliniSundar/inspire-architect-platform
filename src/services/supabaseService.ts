@@ -102,11 +102,12 @@ export const signOut = async () => {
   }
 };
 
-// Profile functions
+// Profile functions - using type casting to overcome type issues
 export const getProfile = async (userId: string) => {
   try {
-    const { data, error } = await supabase
-      .from('profiles')
+    // Use type assertion to overcome type checking limitations
+    const { data, error } = await (supabase
+      .from('profiles') as any)
       .select('*, architect_profiles(*), homeowner_profiles(*)')
       .eq('id', userId)
       .single();
@@ -122,8 +123,9 @@ export const getProfile = async (userId: string) => {
 
 export const updateProfile = async (userId: string, updates: any) => {
   try {
-    const { data, error } = await supabase
-      .from('profiles')
+    // Use type assertion to overcome type checking limitations
+    const { data, error } = await (supabase
+      .from('profiles') as any)
       .update(updates)
       .eq('id', userId)
       .select()
@@ -152,8 +154,9 @@ export const updateProfile = async (userId: string, updates: any) => {
 // User role-based functions
 export const updateArchitectProfile = async (userId: string, updates: any) => {
   try {
-    const { data, error } = await supabase
-      .from('architect_profiles')
+    // Use type assertion to overcome type checking limitations
+    const { data, error } = await (supabase
+      .from('architect_profiles') as any)
       .update(updates)
       .eq('id', userId)
       .select()
@@ -181,8 +184,9 @@ export const updateArchitectProfile = async (userId: string, updates: any) => {
 
 export const updateHomeownerProfile = async (userId: string, updates: any) => {
   try {
-    const { data, error } = await supabase
-      .from('homeowner_profiles')
+    // Use type assertion to overcome type checking limitations
+    const { data, error } = await (supabase
+      .from('homeowner_profiles') as any)
       .update(updates)
       .eq('id', userId)
       .select()
