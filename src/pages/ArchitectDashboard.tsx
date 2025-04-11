@@ -188,7 +188,10 @@ const ArchitectDashboard = () => {
                             variant="outline" 
                             size="sm" 
                             className="text-red-500 border-red-200 hover:bg-red-50"
-                            onClick={() => {/* Handle unfollow */}}
+                            onClick={() => unfollowArchitect(user.id, followedUser.id).then(() => {
+                              // Remove from local state after unfollowing
+                              setFollowing(following.filter(u => u.id !== followedUser.id));
+                            })}
                           >
                             Unfollow
                           </Button>

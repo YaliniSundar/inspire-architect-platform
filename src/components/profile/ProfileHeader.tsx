@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapPinIcon, BriefcaseIcon, UsersIcon, SettingsIcon, MailIcon, CalendarIcon } from 'lucide-react';
@@ -35,17 +34,18 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
   const [followersCount, setFollowersCount] = useState(profile.followers);
   
   useEffect(() => {
-    // Check if user is already following this profile
     const checkFollowStatus = async () => {
       if (!user || !profile.id) return;
       
       try {
-        // In a real app, this would check the database for follow status
-        // For now we'll simulate with local storage
-        const followingList = JSON.parse(localStorage.getItem(`following_${user.id}`) || '[]');
-        setIsFollowing(followingList.includes(profile.id));
+        const { data } = await supabase
+          .from('follows')
+          .select('*')
+          .eq('follower_id', user.id)
+          .eq('following_id', profile.id);
+          
+        setIsFollowing(data && data.length > 0);
         
-        // Also check if the architect has been hired by this user
         if (isArchitect && user.userType === 'homeowner') {
           const { status } = await getHiringStatus(user.id, profile.id);
           setIsHired(status === 'accepted' || status === 'pending');
@@ -73,13 +73,6 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
     try {
       if (isFollowing) {
         await unfollowArchitect(user.id, profile.id);
-        
-        // Update local state
-        const followingList = JSON.parse(localStorage.getItem(`following_${user.id}`) || '[]');
-        localStorage.setItem(`following_${user.id}`, JSON.stringify(
-          followingList.filter((id: string) => id !== profile.id)
-        ));
-        
         setIsFollowing(false);
         setFollowersCount(prev => prev - 1);
         
@@ -89,12 +82,6 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
         });
       } else {
         await followArchitect(user.id, profile.id);
-        
-        // Update local state
-        const followingList = JSON.parse(localStorage.getItem(`following_${user.id}`) || '[]');
-        followingList.push(profile.id);
-        localStorage.setItem(`following_${user.id}`, JSON.stringify(followingList));
-        
         setIsFollowing(true);
         setFollowersCount(prev => prev + 1);
         
@@ -117,7 +104,6 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
   
   return (
     <>
-      {/* Cover Image */}
       <div className="relative h-64 md:h-80 w-full">
         <img
           src={profile.coverUrl}
@@ -128,7 +114,6 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
       </div>
       
       <div className="container relative">
-        {/* Profile Header */}
         <div className="flex flex-col md:flex-row items-start md:items-end gap-6 -mt-20 mb-8">
           <Avatar className="w-32 h-32 border-4 border-background">
             <AvatarImage src={profile.avatarUrl} alt={profile.name} />
@@ -171,7 +156,6 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
               </div>
             </div>
 
-            {/* Show specialties for architects */}
             {isArchitect && profile.specialties && profile.specialties.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-2">
                 {profile.specialties.slice(0, 3).map((specialty, index) => (

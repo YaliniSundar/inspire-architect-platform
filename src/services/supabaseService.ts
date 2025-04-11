@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -259,7 +258,7 @@ export const getFollowingList = async (userId: string) => {
   try {
     const { data, error } = await supabase
       .from('follows')
-      .select('following_id, profiles!following_id(*)')
+      .select('following_id, profiles!follows_following_id_fkey(*)')
       .eq('follower_id', userId);
     
     if (error) throw error;
@@ -275,7 +274,7 @@ export const getFollowersList = async (userId: string) => {
   try {
     const { data, error } = await supabase
       .from('follows')
-      .select('follower_id, profiles!follower_id(*)')
+      .select('follower_id, profiles!follows_follower_id_fkey(*)')
       .eq('following_id', userId);
     
     if (error) throw error;
