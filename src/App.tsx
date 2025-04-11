@@ -19,6 +19,7 @@ import CookiePolicyPage from "./pages/CookiePolicyPage";
 import ArchitectsListPage from "./pages/ArchitectsListPage";
 import HomeownerDashboard from "./pages/HomeownerDashboard";
 import ArchitectDashboard from "./pages/ArchitectDashboard";
+import HireArchitectPage from "./pages/HireArchitectPage";
 
 // Auth pages
 import SignupPage from "./pages/SignupPage";
@@ -110,6 +111,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <Layout><DesignDetail /></Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/hire/:id" 
+                element={
+                  <ProtectedRoute>
+                    <Layout><HireArchitectPage /></Layout>
                   </ProtectedRoute>
                 } 
               />

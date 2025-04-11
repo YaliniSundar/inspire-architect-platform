@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { updateUserProfile, getUserById } from '@/services/authService';
+import { supabase } from '@/integrations/supabase/client';
 
 type User = {
   id: string;
@@ -11,6 +12,8 @@ type User = {
   profile?: any;
   savedItems?: string[];
   likedItems?: string[];
+  following?: string[];
+  followers?: string[];
 } | null;
 
 type AuthContextType = {
@@ -22,8 +25,11 @@ type AuthContextType = {
   disableAccount: () => Promise<void>;
   saveItem: (itemId: string) => Promise<void>;
   likeItem: (itemId: string) => Promise<void>;
+  followUser: (userId: string) => Promise<void>;
+  unfollowUser: (userId: string) => Promise<void>;
   removeSavedItem: (itemId: string) => Promise<void>;
   removeLikedItem: (itemId: string) => Promise<void>;
+  updateProfile: (updates: Partial<User>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,6 +53,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.removeItem('isAuthenticated');
       }
     }
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        // User signed in via Supabase Auth
+        const user = session.user;
+        const userType = user.user_metadata.userType || 'homeowner';
+        const name = user.user_metadata.name || '';
+        
+        setUser({
+          id: user.id,
+          name: name,
+          email: user.email || '',
+          userType: userType as 'homeowner' | 'architect',
+          isActive: true,
+          savedItems: [],
+          likedItems: [],
+          following: [],
+          followers: []
+        });
+        setIsAuthenticated(true);
+        
+        // Store in localStorage
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('user', JSON.stringify({
+          id: user.id,
+          name: name,
+          email: user.email || '',
+          userType: userType as 'homeowner' | 'architect',
+          isActive: true,
+          savedItems: [],
+          likedItems: [],
+          following: [],
+          followers: []
+        }));
+      } else if (event === 'SIGNED_OUT') {
+        // User signed out
+        setUser(null);
+        setIsAuthenticated(false);
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('user');
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
   
   const login = (userData: User) => {
@@ -55,6 +108,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       ...userData,
       savedItems: userData.savedItems || [],
       likedItems: userData.likedItems || [],
+      following: userData.following || [],
+      followers: userData.followers || [],
       isActive: true
     };
     
@@ -64,7 +119,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('user', JSON.stringify(userWithCollections));
   };
   
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
     setIsAuthenticated(false);
     localStorage.removeItem('isAuthenticated');
@@ -146,6 +202,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return Promise.resolve();
   };
   
+  const followUser = async (userId: string): Promise<void> => {
+    if (!user) throw new Error('No user is logged in');
+    
+    // Add user to following list if not already following
+    if (!user.following?.includes(userId)) {
+      const following = [...(user.following || []), userId];
+      
+      // Update in the "database"
+      const success = updateUserProfile(user.email, { following });
+      
+      if (!success) throw new Error('Failed to follow user');
+      
+      // Update local state
+      const newUser = { ...user, following };
+      setUser(newUser);
+      localStorage.setItem('user', JSON.stringify(newUser));
+    }
+    
+    return Promise.resolve();
+  };
+  
+  const unfollowUser = async (userId: string): Promise<void> => {
+    if (!user) throw new Error('No user is logged in');
+    
+    // Remove user from following list
+    const following = user.following?.filter(id => id !== userId) || [];
+    
+    // Update in the "database"
+    const success = updateUserProfile(user.email, { following });
+    
+    if (!success) throw new Error('Failed to unfollow user');
+    
+    // Update local state
+    const newUser = { ...user, following };
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    
+    return Promise.resolve();
+  };
+  
   const removeSavedItem = async (itemId: string): Promise<void> => {
     if (!user) throw new Error('No user is logged in');
     
@@ -184,6 +280,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return Promise.resolve();
   };
   
+  const updateProfile = async (updates: Partial<User>): Promise<void> => {
+    if (!user) throw new Error('No user is logged in');
+    
+    // Update profile in the "database"
+    const success = updateUserProfile(user.email, updates);
+    
+    if (!success) throw new Error('Failed to update profile');
+    
+    // Update local state
+    const newUser = { ...user, ...updates };
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    
+    return Promise.resolve();
+  };
+  
   const value = {
     user,
     isAuthenticated,
@@ -193,8 +305,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     disableAccount,
     saveItem,
     likeItem,
+    followUser,
+    unfollowUser,
     removeSavedItem,
-    removeLikedItem
+    removeLikedItem,
+    updateProfile
   };
   
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

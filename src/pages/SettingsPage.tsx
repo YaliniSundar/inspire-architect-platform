@@ -12,6 +12,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { 
   Table,
   TableBody,
@@ -33,12 +44,22 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
-import { UserIcon, ShieldIcon, LogOutIcon, AlertTriangleIcon } from 'lucide-react';
+import { useForm } from "react-hook-form";
+import { UserIcon, ShieldIcon, LogOutIcon, AlertTriangleIcon, UsersIcon } from 'lucide-react';
+import { updateProfile } from '@/services/supabaseService';
 
 const SettingsPage = () => {
   const { user, logout, updateUserType, disableAccount } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+
+  const form = useForm({
+    defaultValues: {
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: user?.profile?.phone || "",
+    },
+  });
 
   if (!user) {
     return (
@@ -99,48 +120,142 @@ const SettingsPage = () => {
     navigate('/');
   };
 
+  const onSubmit = async (values: any) => {
+    setIsLoading(true);
+    try {
+      await updateProfile(user.id, {
+        full_name: values.name,
+        // Note: email cannot be updated directly in Supabase auth
+        // Would need to use a special flow for that
+        // For now just update in profile
+      });
+      
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="container py-12">
       <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
       
-      <div className="grid gap-8 md:grid-cols-3">
-        <div className="md:col-span-1">
+      <Tabs defaultValue="profile" className="space-y-8">
+        <TabsList>
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <UserIcon className="h-4 w-4" />
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="account" className="flex items-center gap-2">
+            <ShieldIcon className="h-4 w-4" />
+            Account
+          </TabsTrigger>
+          <TabsTrigger value="following" className="flex items-center gap-2">
+            <UsersIcon className="h-4 w-4" />
+            Following
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="profile" className="space-y-8">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <UserIcon className="h-5 w-5" />
-                Profile Summary
+                Profile Information
               </CardTitle>
+              <CardDescription>
+                Update your personal information
+              </CardDescription>
+            </CardHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your email" type="email" {...field} readOnly />
+                        </FormControl>
+                        <FormDescription>
+                          Email address cannot be changed directly. Contact support for help.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your phone number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </CardFooter>
+              </form>
+            </Form>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Account Type
+              </CardTitle>
+              <CardDescription>
+                View your current account type
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <Label className="text-muted-foreground">Name</Label>
-                  <p className="font-medium">{user.name}</p>
+                  <Label className="text-base">Current Account Type</Label>
+                  <p className="text-sm text-muted-foreground capitalize">{user.userType}</p>
                 </div>
-                <div>
-                  <Label className="text-muted-foreground">Email</Label>
-                  <p className="font-medium">{user.email}</p>
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">Account Type</Label>
-                  <p className="font-medium capitalize">{user.userType}</p>
-                </div>
+                <Button variant="outline" disabled>
+                  Cannot be changed
+                </Button>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" size="sm" onClick={() => navigate(`/profile/${user.id}`)}>
-                View Profile
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOutIcon className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
-            </CardFooter>
           </Card>
-        </div>
-
-        <div className="md:col-span-2 space-y-8">
+        </TabsContent>
+        
+        <TabsContent value="account" className="space-y-8">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -148,30 +263,24 @@ const SettingsPage = () => {
                 Account Preferences
               </CardTitle>
               <CardDescription>
-                Manage your account type and preferences
+                Manage your account preferences
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableBody>
                   <TableRow>
-                    <TableCell className="font-medium">Account Type</TableCell>
-                    <TableCell>Currently set as: <span className="font-medium capitalize">{user.userType}</span></TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="outline"
-                        onClick={handleUserTypeChange}
-                        disabled={isLoading}
-                      >
-                        Switch to {user.userType === 'homeowner' ? 'Architect' : 'Homeowner'}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                  <TableRow>
                     <TableCell className="font-medium">Email Notifications</TableCell>
                     <TableCell>Receive email updates about your activity</TableCell>
                     <TableCell className="text-right">
                       <Switch defaultChecked id="email-notifications" />
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Marketing Communications</TableCell>
+                    <TableCell>Receive promotional emails from Design Next</TableCell>
+                    <TableCell className="text-right">
+                      <Switch id="marketing-comm" />
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -189,36 +298,99 @@ const SettingsPage = () => {
                 Actions that can't be undone
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive">
-                    Disable Account
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will disable your account and remove your access to the platform.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
-                      onClick={handleDisableAccount}
-                      disabled={isLoading}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      {isLoading ? "Processing..." : "Yes, disable my account"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between border rounded p-4">
+                <div>
+                  <h3 className="font-medium">Log out of all devices</h3>
+                  <p className="text-sm text-muted-foreground">Logs you out from all browsers and devices</p>
+                </div>
+                <Button variant="outline">Log out everywhere</Button>
+              </div>
+              
+              <div className="flex items-center justify-between border rounded p-4">
+                <div>
+                  <h3 className="font-medium">Disable account</h3>
+                  <p className="text-sm text-muted-foreground">Temporarily disable your account</p>
+                </div>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive">
+                      Disable Account
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will disable your account and remove your access to the platform.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction 
+                        onClick={handleDisableAccount}
+                        disabled={isLoading}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {isLoading ? "Processing..." : "Yes, disable my account"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="following" className="space-y-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UsersIcon className="h-5 w-5" />
+                Following
+              </CardTitle>
+              <CardDescription>
+                Architects you are following
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <p>You're not following any architects yet</p>
+                <p className="mt-1 text-sm">Follow architects to stay updated with their latest designs</p>
+                <Button 
+                  onClick={() => navigate('/architects')}
+                  variant="outline" 
+                  className="mt-4"
+                >
+                  Browse Architects
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UsersIcon className="h-5 w-5" />
+                Followers
+              </CardTitle>
+              <CardDescription>
+                People following you
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8 text-muted-foreground">
+                <p>You don't have any followers yet</p>
+                {user.userType === 'architect' ? (
+                  <p className="mt-1 text-sm">Complete your profile and add designs to attract followers</p>
+                ) : (
+                  <p className="mt-1 text-sm">Share your saved designs to attract followers</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

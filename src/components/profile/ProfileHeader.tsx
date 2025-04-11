@@ -1,9 +1,13 @@
 
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapPinIcon, BriefcaseIcon, UsersIcon, SettingsIcon, MailIcon, CalendarIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from '@/contexts/AuthContext';
+import { followArchitect, unfollowArchitect, getHiringStatus } from '@/services/supabaseService';
+import { toast } from '@/components/ui/use-toast';
 
 interface ProfileHeaderProps {
   profile: {
@@ -24,6 +28,74 @@ interface ProfileHeaderProps {
 
 const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHeaderProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isHired, setIsHired] = useState(false);
+  const [loadingFollow, setLoadingFollow] = useState(false);
+  
+  useEffect(() => {
+    // Check if user is already following this profile
+    const checkFollowStatus = async () => {
+      if (!user || !profile.id) return;
+      
+      try {
+        // In a real app, this would check the database for follow status
+        // For now we'll simulate with local storage
+        const followingList = JSON.parse(localStorage.getItem(`following_${user.id}`) || '[]');
+        setIsFollowing(followingList.includes(profile.id));
+        
+        // Also check if the architect has been hired by this user
+        if (isArchitect && user.userType === 'homeowner') {
+          const { status } = await getHiringStatus(user.id, profile.id);
+          setIsHired(status === 'accepted' || status === 'pending');
+        }
+      } catch (error) {
+        console.error("Error checking follow status:", error);
+      }
+    };
+    
+    checkFollowStatus();
+  }, [user, profile.id, isArchitect]);
+  
+  const handleFollowToggle = async () => {
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please log in to follow this profile",
+        variant: "destructive",
+      });
+      return navigate('/login');
+    }
+    
+    setLoadingFollow(true);
+    
+    try {
+      if (isFollowing) {
+        await unfollowArchitect(user.id, profile.id);
+        
+        // Update local state
+        const followingList = JSON.parse(localStorage.getItem(`following_${user.id}`) || '[]');
+        localStorage.setItem(`following_${user.id}`, JSON.stringify(
+          followingList.filter((id: string) => id !== profile.id)
+        ));
+        
+        setIsFollowing(false);
+      } else {
+        await followArchitect(user.id, profile.id);
+        
+        // Update local state
+        const followingList = JSON.parse(localStorage.getItem(`following_${user.id}`) || '[]');
+        followingList.push(profile.id);
+        localStorage.setItem(`following_${user.id}`, JSON.stringify(followingList));
+        
+        setIsFollowing(true);
+      }
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+    } finally {
+      setLoadingFollow(false);
+    }
+  };
   
   return (
     <>
@@ -48,9 +120,14 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
           <div className="flex-1 space-y-2">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-3xl font-bold">{profile.name}</h1>
-              {isArchitect && profile.availableForHire && (
+              {isArchitect && profile.availableForHire && !isHired && (
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
                   Available for Hire
+                </Badge>
+              )}
+              {isArchitect && isHired && (
+                <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                  Hired
                 </Badge>
               )}
             </div>
@@ -97,11 +174,25 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
               </Button>
             ) : (
               <>
-                <Button className="flex-1 md:flex-none" size="lg">Follow</Button>
+                <Button 
+                  className="flex-1 md:flex-none" 
+                  size="lg"
+                  variant={isFollowing ? "secondary" : "default"}
+                  onClick={handleFollowToggle}
+                  disabled={loadingFollow}
+                >
+                  {isFollowing ? "Following" : "Follow"}
+                </Button>
                 {isArchitect ? (
-                  <Button variant="secondary" className="flex-1 md:flex-none" size="lg" asChild>
+                  <Button 
+                    variant="secondary" 
+                    className="flex-1 md:flex-none" 
+                    size="lg" 
+                    asChild
+                    disabled={isHired}
+                  >
                     <Link to={`/hire/${profile.id}`}>
-                      Hire Now
+                      {isHired ? "Already Hired" : "Hire Now"}
                     </Link>
                   </Button>
                 ) : (
