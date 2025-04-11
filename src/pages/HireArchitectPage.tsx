@@ -203,7 +203,9 @@ const HireArchitectPage = () => {
               <h3 className="font-medium mb-2">Specialization</h3>
               <div className="flex flex-wrap gap-2">
                 {architect.architect_profiles.specialization.split(',').map((specialty: string, index: number) => (
-                  <Badge key={index} variant="outline">{specialty.trim()}</Badge>
+                  <Badge key={index} variant="default">
+                    {specialty.trim()}
+                  </Badge>
                 ))}
               </div>
             </div>
