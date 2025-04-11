@@ -12,12 +12,13 @@ import { Input } from "@/components/ui/input";
 import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, LogOutIcon, ArrowLeft, BookmarkIcon, UsersIcon, ImageIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
+import React from 'react';
 
 interface NavbarProps {
   logo?: React.ReactNode;
 }
 
-const Navbar = ({ logo }: NavbarProps) => {
+const Navbar: React.FC<NavbarProps> = ({ logo }) => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();

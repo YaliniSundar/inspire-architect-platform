@@ -1,16 +1,23 @@
 
 import { Link } from 'react-router-dom';
+import React from 'react';
 
-const Footer = () => {
+interface FooterProps {
+  logo?: React.ReactNode;
+}
+
+const Footer: React.FC<FooterProps> = ({ logo }) => {
   return (
     <footer className="border-t bg-background">
       <div className="container py-8 md:py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div className="space-y-3">
             <Link to="/" className="flex items-center gap-2">
-              <span className="font-bold text-xl hero-gradient bg-clip-text text-transparent">
-                Design Next
-              </span>
+              {logo ? logo : (
+                <span className="font-bold text-xl hero-gradient bg-clip-text text-transparent">
+                  Design Next
+                </span>
+              )}
             </Link>
             <p className="text-sm text-muted-foreground">
               Connect with architects and find inspiration for your dream home.
