@@ -9,8 +9,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { HeartIcon, BookmarkIcon, ShareIcon, MessageSquareIcon, HomeIcon } from 'lucide-react';
+import { HeartIcon, BookmarkIcon, ShareIcon, HomeIcon } from 'lucide-react';
 import { DesignProps } from '@/components/DesignCard';
+import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
+import { likePost, unlikePost, savePost, unsavePost } from '@/services/supabaseService';
+import { toast } from '@/components/ui/use-toast';
 
 // Mock data - would come from an API in a real app
 const MOCK_DESIGNS: DesignProps[] = [
@@ -80,6 +84,71 @@ const DesignDetail = () => {
   const { id } = useParams<{ id: string }>();
   const design = MOCK_DESIGNS.find(d => d.id === id);
   const details = MOCK_DETAILS[id as keyof typeof MOCK_DETAILS];
+  const { user } = useAuth();
+  
+  // Local state for like/save status
+  const [isLiked, setIsLiked] = useState(user?.likedItems?.includes(id || '') || false);
+  const [isSaved, setIsSaved] = useState(user?.savedItems?.includes(id || '') || false);
+  const [likesCount, setLikesCount] = useState(design?.likes || 0);
+  const [savesCount, setSavesCount] = useState(design?.saves || 0);
+  
+  const handleLikeToggle = async () => {
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please log in to like this design",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      if (isLiked) {
+        await unlikePost(user.id, id || '');
+        setLikesCount(prev => prev - 1);
+      } else {
+        await likePost(user.id, id || '');
+        setLikesCount(prev => prev + 1);
+      }
+      setIsLiked(!isLiked);
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      toast({
+        title: "Action failed",
+        description: "Could not update like status",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  const handleSaveToggle = async () => {
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please log in to save this design",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      if (isSaved) {
+        await unsavePost(user.id, id || '');
+        setSavesCount(prev => prev - 1);
+      } else {
+        await savePost(user.id, id || '');
+        setSavesCount(prev => prev + 1);
+      }
+      setIsSaved(!isSaved);
+    } catch (error) {
+      console.error("Error toggling save:", error);
+      toast({
+        title: "Action failed",
+        description: "Could not update save status",
+        variant: "destructive",
+      });
+    }
+  };
   
   if (!design || !details) {
     return (
@@ -126,13 +195,23 @@ const DesignDetail = () => {
               </Link>
               
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
-                  <HeartIcon className="h-4 w-4" />
-                  <span>{design.likes}</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className={`flex items-center gap-1 ${isLiked ? 'bg-rose-100 text-rose-500 border-rose-200 hover:bg-rose-200 hover:text-rose-600' : ''}`}
+                  onClick={handleLikeToggle}
+                >
+                  <HeartIcon className="h-4 w-4" fill={isLiked ? "currentColor" : "none"} />
+                  <span>{likesCount}</span>
                 </Button>
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
-                  <BookmarkIcon className="h-4 w-4" />
-                  <span>{design.saves}</span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className={`flex items-center gap-1 ${isSaved ? 'bg-blue-100 text-blue-500 border-blue-200 hover:bg-blue-200 hover:text-blue-600' : ''}`}
+                  onClick={handleSaveToggle}
+                >
+                  <BookmarkIcon className="h-4 w-4" fill={isSaved ? "currentColor" : "none"} />
+                  <span>{savesCount}</span>
                 </Button>
                 <Button variant="outline" size="sm" className="flex items-center gap-1">
                   <ShareIcon className="h-4 w-4" />
@@ -209,39 +288,6 @@ const DesignDetail = () => {
                 ))}
               </div>
             </div>
-            
-            {/* Comments section */}
-            <div className="mt-6 pt-6 border-t">
-              <h3 className="text-lg font-medium mb-4">Comments ({design.comments})</h3>
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <Avatar>
-                    <AvatarImage src="https://randomuser.me/api/portraits/men/42.jpg" alt="John Doe" />
-                    <AvatarFallback>JD</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium">John Doe</p>
-                      <p className="text-xs text-muted-foreground">2 days ago</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Beautiful design! I love the clean lines and the way natural light filters through the space.</p>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  <Avatar>
-                    <AvatarImage src="https://randomuser.me/api/portraits/women/24.jpg" alt="Anna Smith" />
-                    <AvatarFallback>AS</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium">Anna Smith</p>
-                      <p className="text-xs text-muted-foreground">5 days ago</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">This is exactly the style I'm looking for in my new home. Is it possible to get a consultation?</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
         
@@ -253,8 +299,16 @@ const DesignDetail = () => {
             
             <div className="space-y-4">
               <Button className="w-full">Message Architect</Button>
-              <Button variant="outline" className="w-full">View Profile</Button>
-              <Button variant="secondary" className="w-full">Save Design</Button>
+              <Button variant="outline" className="w-full" asChild>
+                <Link to={`/profile/${design.architect.id}`}>View Profile</Link>
+              </Button>
+              <Button 
+                variant="secondary" 
+                className="w-full"
+                onClick={handleSaveToggle}
+              >
+                {isSaved ? "Unsave Design" : "Save Design"}
+              </Button>
             </div>
 
             <div className="mt-6 pt-6 border-t">

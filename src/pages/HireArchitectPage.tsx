@@ -23,8 +23,10 @@ import {
   MailIcon, 
   PhoneIcon, 
   BriefcaseIcon,
-  CheckCircle
+  CheckCircle,
+  Globe
 } from 'lucide-react';
+import { Progress } from "@/components/ui/progress";
 import { toast } from '@/components/ui/use-toast';
 
 const HireArchitectPage = () => {
@@ -69,7 +71,15 @@ const HireArchitectPage = () => {
   }, [id, user]);
 
   const handleHire = async () => {
-    if (!user || !id) return;
+    if (!user || !id) {
+      toast({
+        title: "Login required",
+        description: "You need to be logged in to hire an architect",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
     
     setSubmitting(true);
     try {
@@ -98,7 +108,10 @@ const HireArchitectPage = () => {
   if (loading) {
     return (
       <div className="container py-16 text-center">
-        <p className="text-muted-foreground">Loading architect details...</p>
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-muted-foreground">Loading architect details...</p>
+          <Progress value={80} className="w-64" />
+        </div>
       </div>
     );
   }
@@ -126,8 +139,15 @@ const HireArchitectPage = () => {
             <AvatarImage src={architect.profile_picture} alt={architect.full_name} />
             <AvatarFallback>{architect.full_name?.charAt(0)}</AvatarFallback>
           </Avatar>
-          <div>
-            <CardTitle className="text-2xl">{architect.full_name}</CardTitle>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-2xl">{architect.full_name}</CardTitle>
+              {(isHired || isPending) && (
+                <Badge variant={isHired ? "success" : "info"}>
+                  {isHired ? "Hired" : "Pending"}
+                </Badge>
+              )}
+            </div>
             <CardDescription>{architect.architect_profiles?.specialization || "Architect"}</CardDescription>
           </div>
         </CardHeader>
@@ -153,6 +173,15 @@ const HireArchitectPage = () => {
               <BriefcaseIcon className="h-4 w-4 text-muted-foreground" />
               <span>{architect.architect_profiles?.years_experience || "0"} years experience</span>
             </div>
+            
+            {architect.website && (
+              <div className="flex items-center gap-2">
+                <Globe className="h-4 w-4 text-muted-foreground" />
+                <a href={architect.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                  {architect.website.replace(/(^\w+:|^)\/\//, '')}
+                </a>
+              </div>
+            )}
           </div>
           
           {architect.architect_profiles?.bio && (
@@ -166,6 +195,17 @@ const HireArchitectPage = () => {
             <div className="mt-4">
               <h3 className="font-medium mb-2">Education</h3>
               <p className="text-muted-foreground">{architect.architect_profiles.educational_background}</p>
+            </div>
+          )}
+          
+          {architect.architect_profiles?.specialization && (
+            <div className="mt-4">
+              <h3 className="font-medium mb-2">Specialization</h3>
+              <div className="flex flex-wrap gap-2">
+                {architect.architect_profiles.specialization.split(',').map((specialty: string, index: number) => (
+                  <Badge key={index} variant="outline">{specialty.trim()}</Badge>
+                ))}
+              </div>
             </div>
           )}
         </CardContent>
@@ -226,6 +266,29 @@ const HireArchitectPage = () => {
         </Card>
       )}
     </div>
+  );
+};
+
+// Create Badge component for hire status
+const Badge = ({ 
+  children, 
+  variant = "default"
+}: { 
+  children: React.ReactNode; 
+  variant?: "default" | "success" | "info" | "warning" | "error" 
+}) => {
+  const variantClasses = {
+    default: "bg-gray-100 text-gray-800",
+    success: "bg-green-100 text-green-800",
+    info: "bg-blue-100 text-blue-800",
+    warning: "bg-yellow-100 text-yellow-800",
+    error: "bg-red-100 text-red-800"
+  };
+
+  return (
+    <span className={`text-xs px-2 py-1 rounded-full font-medium ${variantClasses[variant]}`}>
+      {children}
+    </span>
   );
 };
 

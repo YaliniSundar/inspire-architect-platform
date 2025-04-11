@@ -32,6 +32,7 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
   const [isFollowing, setIsFollowing] = useState(false);
   const [isHired, setIsHired] = useState(false);
   const [loadingFollow, setLoadingFollow] = useState(false);
+  const [followersCount, setFollowersCount] = useState(profile.followers);
   
   useEffect(() => {
     // Check if user is already following this profile
@@ -80,6 +81,12 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
         ));
         
         setIsFollowing(false);
+        setFollowersCount(prev => prev - 1);
+        
+        toast({
+          title: "Unfollowed",
+          description: `You are no longer following ${profile.name}`,
+        });
       } else {
         await followArchitect(user.id, profile.id);
         
@@ -89,9 +96,20 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
         localStorage.setItem(`following_${user.id}`, JSON.stringify(followingList));
         
         setIsFollowing(true);
+        setFollowersCount(prev => prev + 1);
+        
+        toast({
+          title: "Following",
+          description: `You are now following ${profile.name}`,
+        });
       }
     } catch (error) {
       console.error('Error toggling follow:', error);
+      toast({
+        title: "Action failed",
+        description: "Could not update follow status",
+        variant: "destructive",
+      });
     } finally {
       setLoadingFollow(false);
     }
@@ -145,7 +163,7 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
               </div>
               <div className="flex items-center gap-1">
                 <UsersIcon className="h-4 w-4" />
-                <span>{profile.followers.toLocaleString()} followers</span>
+                <span>{followersCount.toLocaleString()} followers</span>
               </div>
               <div className="flex items-center gap-1">
                 <CalendarIcon className="h-4 w-4" />
@@ -170,19 +188,26 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
             {isOwnProfile ? (
               <Button className="flex items-center gap-2" variant="outline" size="lg" onClick={() => navigate('/settings')}>
                 <SettingsIcon className="h-4 w-4" />
-                Settings
+                Dashboard
               </Button>
             ) : (
               <>
                 <Button 
-                  className="flex-1 md:flex-none" 
+                  className={`flex-1 md:flex-none ${isFollowing ? 'bg-secondary hover:bg-secondary/90 text-secondary-foreground' : ''}`}
                   size="lg"
-                  variant={isFollowing ? "secondary" : "default"}
+                  variant={isFollowing ? "outline" : "default"}
                   onClick={handleFollowToggle}
                   disabled={loadingFollow}
                 >
-                  {isFollowing ? "Following" : "Follow"}
+                  {isFollowing ? (
+                    <>
+                      <span className="flex items-center">
+                        <span className="mr-1">✓</span> Following
+                      </span>
+                    </>
+                  ) : "Follow"}
                 </Button>
+                
                 {isArchitect ? (
                   <Button 
                     variant="secondary" 

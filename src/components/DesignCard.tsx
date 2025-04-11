@@ -4,6 +4,9 @@ import { HeartIcon, BookmarkIcon, MessageSquareIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
+import { likePost, unlikePost, savePost, unsavePost } from '@/services/supabaseService';
+import { toast } from '@/components/ui/use-toast';
 
 export interface DesignProps {
   id: string;
@@ -22,31 +25,79 @@ export interface DesignProps {
 
 interface DesignCardProps {
   design: DesignProps;
-  compact?: boolean; // Added compact prop
+  compact?: boolean;
 }
 
 const DesignCard = ({ design, compact = false }: DesignCardProps) => {
-  const { user, saveItem, likeItem, removeSavedItem, removeLikedItem } = useAuth();
+  const { user } = useAuth();
   
-  // Check if the user has liked/saved this item
-  const isLiked = user?.likedItems?.includes(design.id) || false;
-  const isSaved = user?.savedItems?.includes(design.id) || false;
+  // Use local state to track like/save status for immediate UI feedback
+  const [isLiked, setIsLiked] = useState(user?.likedItems?.includes(design.id) || false);
+  const [isSaved, setIsSaved] = useState(user?.savedItems?.includes(design.id) || false);
+  const [likesCount, setLikesCount] = useState(design.likes);
+  const [savesCount, setSavesCount] = useState(design.saves);
   
   // Handle like/unlike
-  const handleLike = async () => {
-    if (isLiked) {
-      await removeLikedItem(design.id);
-    } else {
-      await likeItem(design.id);
+  const handleLike = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigating to design detail
+    
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please log in to like designs",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      if (isLiked) {
+        await unlikePost(user.id, design.id);
+        setLikesCount(prev => prev - 1);
+      } else {
+        await likePost(user.id, design.id);
+        setLikesCount(prev => prev + 1);
+      }
+      setIsLiked(!isLiked);
+    } catch (error) {
+      console.error("Error toggling like:", error);
+      toast({
+        title: "Action failed",
+        description: "Could not update like status",
+        variant: "destructive",
+      });
     }
   };
   
   // Handle save/unsave
-  const handleSave = async () => {
-    if (isSaved) {
-      await removeSavedItem(design.id);
-    } else {
-      await saveItem(design.id);
+  const handleSave = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent navigating to design detail
+    
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please log in to save designs",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      if (isSaved) {
+        await unsavePost(user.id, design.id);
+        setSavesCount(prev => prev - 1);
+      } else {
+        await savePost(user.id, design.id);
+        setSavesCount(prev => prev + 1);
+      }
+      setIsSaved(!isSaved);
+    } catch (error) {
+      console.error("Error toggling save:", error);
+      toast({
+        title: "Action failed",
+        description: "Could not update save status",
+        variant: "destructive",
+      });
     }
   };
 
@@ -109,7 +160,7 @@ const DesignCard = ({ design, compact = false }: DesignCardProps) => {
               onClick={handleLike}
             >
               <HeartIcon className="h-3.5 w-3.5" fill={isLiked ? "currentColor" : "none"} />
-              {design.likes}
+              {likesCount}
             </Button>
             <Button 
               variant="ghost" 
@@ -118,12 +169,13 @@ const DesignCard = ({ design, compact = false }: DesignCardProps) => {
               onClick={handleSave}
             >
               <BookmarkIcon className="h-3.5 w-3.5" fill={isSaved ? "currentColor" : "none"} />
-              {design.saves}
+              {savesCount}
             </Button>
-            <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1">
-              <MessageSquareIcon className="h-3.5 w-3.5" />
-              {design.comments}
-            </Button>
+            <Link to={`/design/${design.id}`} className="w-full">
+              <Button variant="ghost" size="sm" className="text-xs flex items-center gap-1">
+                Details
+              </Button>
+            </Link>
           </div>
         </div>
       )}
