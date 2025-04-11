@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from '@/contexts/AuthContext';
 import { followArchitect, unfollowArchitect, getHiringStatus } from '@/services/supabaseService';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileHeaderProps {
   profile: {

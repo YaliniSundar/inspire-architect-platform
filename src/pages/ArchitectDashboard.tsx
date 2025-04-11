@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { ImageIcon, UsersIcon, MessageSquareIcon, PlusCircle, Settings2Icon } from "lucide-react";
-import { getFollowingList, getFollowersList } from '@/services/supabaseService';
+import { getFollowingList, getFollowersList, unfollowArchitect } from '@/services/supabaseService';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import DesignNestLogo from '@/components/DesignNestLogo';
 
