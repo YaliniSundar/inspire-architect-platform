@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -274,7 +273,7 @@ export const getFollowingList = async (userId: string) => {
       .from('follows')
       .select(`
         following_id,
-        following_profiles:profiles!following_id(
+        profiles!follows_following_id_fkey(
           id, 
           full_name, 
           profile_picture, 
@@ -288,9 +287,9 @@ export const getFollowingList = async (userId: string) => {
     return { 
       data: data?.map(item => ({
         id: item.following_id,
-        name: item.following_profiles?.full_name || '',
-        avatarUrl: item.following_profiles?.profile_picture || '',
-        role: item.following_profiles?.role || ''
+        name: item.profiles?.full_name || '',
+        avatarUrl: item.profiles?.profile_picture || '',
+        role: item.profiles?.role || ''
       })) || [], 
       error: null 
     };
@@ -306,7 +305,7 @@ export const getFollowersList = async (userId: string) => {
       .from('follows')
       .select(`
         follower_id,
-        follower_profiles:profiles!follower_id(
+        profiles!follows_follower_id_fkey(
           id, 
           full_name, 
           profile_picture, 
@@ -320,9 +319,9 @@ export const getFollowersList = async (userId: string) => {
     return { 
       data: data?.map(item => ({
         id: item.follower_id,
-        name: item.follower_profiles?.full_name || '',
-        avatarUrl: item.follower_profiles?.profile_picture || '',
-        role: item.follower_profiles?.role || ''
+        name: item.profiles?.full_name || '',
+        avatarUrl: item.profiles?.profile_picture || '',
+        role: item.profiles?.role || ''
       })) || [], 
       error: null 
     };
