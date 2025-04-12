@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapPinIcon, BriefcaseIcon, UsersIcon, SettingsIcon, MailIcon, CalendarIcon } from 'lucide-react';
@@ -8,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { followArchitect, unfollowArchitect, getHiringStatus } from '@/services/supabaseService';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { createConversation } from '@/services/chatService';
 
 interface ProfileHeaderProps {
   profile: {
@@ -32,6 +34,7 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
   const [isFollowing, setIsFollowing] = useState(false);
   const [isHired, setIsHired] = useState(false);
   const [loadingFollow, setLoadingFollow] = useState(false);
+  const [loadingHire, setLoadingHire] = useState(false);
   const [followersCount, setFollowersCount] = useState(profile.followers);
   
   useEffect(() => {
@@ -86,6 +89,16 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
         setIsFollowing(true);
         setFollowersCount(prev => prev + 1);
         
+        // Create notification for the followed user
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: profile.id,
+            type: 'follow',
+            content: `${user.name} started following you.`,
+            related_id: user.id
+          });
+        
         toast({
           title: "Following",
           description: `You are now following ${profile.name}`,
@@ -100,6 +113,54 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
       });
     } finally {
       setLoadingFollow(false);
+    }
+  };
+  
+  const handleHireClick = async () => {
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please log in to hire this architect",
+        variant: "destructive",
+      });
+      return navigate('/login');
+    }
+    
+    if (!isFollowing) {
+      toast({
+        title: "Follow required",
+        description: "Please follow this architect first before hiring",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setLoadingHire(true);
+    
+    try {
+      // Create conversation with the architect
+      const conversation = await createConversation({
+        homeownerId: user.id,
+        architectId: profile.id,
+        initialMessage: `Hi ${profile.name}, I'm interested in hiring you for my project.`
+      });
+      
+      if (!conversation) throw new Error("Failed to create conversation");
+      
+      // Navigate to messages page with the new conversation
+      navigate('/messages', { 
+        state: { conversation }
+      });
+      
+    } catch (error) {
+      console.error('Error hiring architect:', error);
+      toast({
+        title: "Action failed",
+        description: "Could not initiate hiring process",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingHire(false);
     }
   };
   
@@ -197,16 +258,27 @@ const ProfileHeader = ({ profile, isOwnProfile, isArchitect = false }: ProfileHe
                   <Button 
                     variant="secondary" 
                     className="flex-1 md:flex-none" 
-                    size="lg" 
-                    asChild
-                    disabled={isHired}
+                    size="lg"
+                    disabled={loadingHire || !isFollowing}
+                    onClick={handleHireClick}
                   >
-                    <Link to={`/hire/${profile.id}`}>
-                      {isHired ? "Already Hired" : "Hire Now"}
-                    </Link>
+                    {loadingHire ? "Processing..." : "Hire Now"}
                   </Button>
                 ) : (
-                  <Button variant="outline" className="flex-1 md:flex-none" size="lg">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 md:flex-none" 
+                    size="lg"
+                    onClick={() => navigate('/messages', { 
+                      state: { 
+                        newRecipient: {
+                          id: profile.id,
+                          name: profile.name,
+                          avatar: profile.avatarUrl
+                        }
+                      }
+                    })}
+                  >
                     <MailIcon className="h-4 w-4 mr-2" />
                     Message
                   </Button>

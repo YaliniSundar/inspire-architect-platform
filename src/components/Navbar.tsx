@@ -9,10 +9,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, LogOutIcon, ArrowLeft, BookmarkIcon, ImageIcon } from 'lucide-react';
+import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, LogOutIcon, ArrowLeft, BookmarkIcon, ImageIcon, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import NotificationsDropdown from './notifications/NotificationsDropdown';
+import { Badge } from "@/components/ui/badge";
+import { getUnreadMessagesCount } from '@/services/chatService';
 
 interface NavbarProps {
   logo?: React.ReactNode;
@@ -22,9 +25,27 @@ const Navbar: React.FC<NavbarProps> = ({ logo }) => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   // Check if we're on a page that needs a back button
   const needsBackButton = ['/verify-otp', '/create-password', '/architect-profile'].includes(location.pathname);
+  
+  // Fetch unread messages count
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const fetchUnreadCount = async () => {
+        const count = await getUnreadMessagesCount(user.id);
+        setUnreadMessagesCount(count);
+      };
+      
+      fetchUnreadCount();
+      
+      // Set up an interval to check for new messages
+      const interval = setInterval(fetchUnreadCount, 30000); // Every 30 seconds
+      
+      return () => clearInterval(interval);
+    }
+  }, [isAuthenticated, user]);
   
   const handleLogout = () => {
     logout();
@@ -124,35 +145,55 @@ const Navbar: React.FC<NavbarProps> = ({ logo }) => {
 
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <UserIcon className="h-5 w-5" />
-                  <span className="sr-only">User menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <div className="flex flex-col space-y-1 p-2">
-                  <p className="text-sm font-medium leading-none">{user?.name}</p>
-                  <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
-                  <p className="text-xs leading-none text-muted-foreground capitalize">{user?.userType}</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/settings" className="w-full cursor-pointer">
-                    Settings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={handleLogout}
-                  className="text-destructive focus:text-destructive cursor-pointer"
-                >
-                  <LogOutIcon className="mr-2 h-4 w-4" />
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <>
+              <Button variant="ghost" size="icon" asChild className="relative">
+                <Link to="/messages">
+                  <MessageSquare className="h-5 w-5" />
+                  {unreadMessagesCount > 0 && (
+                    <Badge className="absolute -top-1 -right-1 px-1 min-w-[1.25rem] h-5 flex items-center justify-center">
+                      {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                    </Badge>
+                  )}
+                </Link>
+              </Button>
+              
+              <NotificationsDropdown />
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full">
+                    <UserIcon className="h-5 w-5" />
+                    <span className="sr-only">User menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="flex flex-col space-y-1 p-2">
+                    <p className="text-sm font-medium leading-none">{user?.name}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                    <p className="text-xs leading-none text-muted-foreground capitalize">{user?.userType}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to={`/profile/${user?.id}`} className="w-full cursor-pointer">
+                      Your Profile
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings" className="w-full cursor-pointer">
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                  >
+                    <LogOutIcon className="mr-2 h-4 w-4" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           ) : (
             <div className="flex gap-2">
               <Button variant="outline" size="sm" asChild>

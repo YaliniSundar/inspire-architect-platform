@@ -20,6 +20,7 @@ import ArchitectsListPage from "./pages/ArchitectsListPage";
 import HomeownerDashboard from "./pages/HomeownerDashboard";
 import ArchitectDashboard from "./pages/ArchitectDashboard";
 import HireArchitectPage from "./pages/HireArchitectPage";
+import ChatPage from "./pages/ChatPage";
 
 // Auth pages
 import SignupPage from "./pages/SignupPage";
@@ -139,6 +140,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <Layout><HireArchitectPage /></Layout>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/messages" 
+                element={
+                  <ProtectedRoute>
+                    <Layout><ChatPage /></Layout>
                   </ProtectedRoute>
                 } 
               />
