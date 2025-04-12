@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -199,6 +200,19 @@ export const updateProfile = async (userId: string, updates: any) => {
 // Following system
 export const followArchitect = async (followerId: string, architectId: string) => {
   try {
+    // Check if already following
+    const { data: existingFollow } = await supabase
+      .from('follows')
+      .select('*')
+      .eq('follower_id', followerId)
+      .eq('following_id', architectId)
+      .maybeSingle();
+      
+    if (existingFollow) {
+      return { success: true, error: null, message: "Already following" };
+    }
+    
+    // Add follow record
     const { error } = await supabase
       .from('follows')
       .insert({
@@ -258,15 +272,31 @@ export const getFollowingList = async (userId: string) => {
   try {
     const { data, error } = await supabase
       .from('follows')
-      .select('following_id, profiles!follows_following_id_fkey(*)')
+      .select(`
+        following_id,
+        profiles:following_id (
+          id, 
+          full_name, 
+          profile_picture, 
+          role
+        )
+      `)
       .eq('follower_id', userId);
     
     if (error) throw error;
     
-    return { data, error: null };
+    return { 
+      data: data?.map(item => ({
+        id: item.following_id,
+        name: item.profiles?.full_name || '',
+        avatarUrl: item.profiles?.profile_picture || '',
+        role: item.profiles?.role || ''
+      })) || [], 
+      error: null 
+    };
   } catch (error: any) {
     console.error("Error fetching following list:", error);
-    return { data: null, error };
+    return { data: [], error };
   }
 };
 
@@ -274,15 +304,31 @@ export const getFollowersList = async (userId: string) => {
   try {
     const { data, error } = await supabase
       .from('follows')
-      .select('follower_id, profiles!follows_follower_id_fkey(*)')
+      .select(`
+        follower_id,
+        profiles:follower_id (
+          id, 
+          full_name, 
+          profile_picture, 
+          role
+        )
+      `)
       .eq('following_id', userId);
     
     if (error) throw error;
     
-    return { data, error: null };
+    return { 
+      data: data?.map(item => ({
+        id: item.follower_id,
+        name: item.profiles?.full_name || '',
+        avatarUrl: item.profiles?.profile_picture || '',
+        role: item.profiles?.role || ''
+      })) || [], 
+      error: null 
+    };
   } catch (error: any) {
     console.error("Error fetching followers list:", error);
-    return { data: null, error };
+    return { data: [], error };
   }
 };
 

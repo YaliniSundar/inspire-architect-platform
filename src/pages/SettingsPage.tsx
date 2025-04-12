@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Card,
@@ -46,12 +46,15 @@ import { toast } from "@/components/ui/use-toast";
 import { useAuth } from '@/contexts/AuthContext';
 import { useForm } from "react-hook-form";
 import { UserIcon, ShieldIcon, LogOutIcon, AlertTriangleIcon, UsersIcon } from 'lucide-react';
-import { updateProfile } from '@/services/supabaseService';
+import { updateProfile, getFollowingList, unfollowArchitect } from '@/services/supabaseService';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const SettingsPage = () => {
   const { user, logout, updateUserType, disableAccount } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [followingList, setFollowingList] = useState<any[]>([]);
+  const [loadingFollowing, setLoadingFollowing] = useState(false);
 
   const form = useForm({
     defaultValues: {
@@ -60,6 +63,45 @@ const SettingsPage = () => {
       phone: user?.profile?.phone || "",
     },
   });
+
+  useEffect(() => {
+    if (user) {
+      fetchFollowing();
+    }
+  }, [user]);
+
+  const fetchFollowing = async () => {
+    if (!user) return;
+    
+    setLoadingFollowing(true);
+    try {
+      const { data } = await getFollowingList(user.id);
+      setFollowingList(data || []);
+    } catch (error) {
+      console.error("Error fetching following list:", error);
+    } finally {
+      setLoadingFollowing(false);
+    }
+  };
+
+  const handleUnfollow = async (architectId: string) => {
+    if (!user) return;
+    
+    try {
+      await unfollowArchitect(user.id, architectId);
+      setFollowingList(prev => prev.filter(item => item.id !== architectId));
+      toast({
+        title: "Unfollowed successfully",
+      });
+    } catch (error) {
+      console.error("Error unfollowing architect:", error);
+      toast({
+        title: "Action failed",
+        description: "Could not unfollow. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (!user) {
     return (
@@ -354,17 +396,56 @@ const SettingsPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                <p>You're not following any architects yet</p>
-                <p className="mt-1 text-sm">Follow architects to stay updated with their latest designs</p>
-                <Button 
-                  onClick={() => navigate('/architects')}
-                  variant="outline" 
-                  className="mt-4"
-                >
-                  Browse Architects
-                </Button>
-              </div>
+              {loadingFollowing ? (
+                <div className="text-center py-8">
+                  <p>Loading...</p>
+                </div>
+              ) : followingList.length > 0 ? (
+                <div className="space-y-4">
+                  {followingList.map((architect) => (
+                    <div key={architect.id} className="flex justify-between items-center p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={architect.avatarUrl} alt={architect.name} />
+                          <AvatarFallback>{architect.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{architect.name}</p>
+                          <p className="text-sm text-muted-foreground capitalize">{architect.role}</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate(`/profile/${architect.id}`)}
+                        >
+                          View Profile
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleUnfollow(architect.id)}
+                        >
+                          Unfollow
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>You're not following any architects yet</p>
+                  <p className="mt-1 text-sm">Follow architects to stay updated with their latest designs</p>
+                  <Button 
+                    onClick={() => navigate('/architects')}
+                    variant="outline" 
+                    className="mt-4"
+                  >
+                    Browse Architects
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
           
