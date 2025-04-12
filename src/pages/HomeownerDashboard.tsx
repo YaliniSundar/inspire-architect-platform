@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
@@ -12,14 +11,47 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 
+interface LikeActivity {
+  created_at: string;
+  posts: {
+    title: string;
+    id: string;
+    media_urls: string[];
+    architect_id: string;
+  };
+  type: 'like';
+}
+
+interface SaveActivity {
+  created_at: string;
+  posts: {
+    title: string;
+    id: string;
+    media_urls: string[];
+    architect_id: string;
+  };
+  type: 'save';
+}
+
+interface FollowActivity {
+  created_at: string;
+  following_id: string;
+  profiles: {
+    full_name: string;
+    profile_picture: string | null;
+  };
+  type: 'follow';
+}
+
+type Activity = LikeActivity | SaveActivity | FollowActivity;
+
 const HomeownerDashboard = () => {
   const { user } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
   const [followingArchitects, setFollowingArchitects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // If user is not logged in or not a homeowner, redirect to login
   if (!user) {
     return <Navigate to="/login" replace />;
   }
@@ -33,7 +65,6 @@ const HomeownerDashboard = () => {
       setIsLoading(true);
       
       try {
-        // Fetch profile data
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select(`
@@ -45,7 +76,6 @@ const HomeownerDashboard = () => {
           
         if (profileError) throw profileError;
         
-        // Fetch recent activity (likes, saves, follows)
         const fetchActivity = async () => {
           const today = new Date();
           const thirtyDaysAgo = new Date(today);
@@ -56,8 +86,7 @@ const HomeownerDashboard = () => {
               .from('likes')
               .select(`
                 created_at,
-                posts(title, id, media_urls, architect_id),
-                type:value('like')
+                posts(title, id, media_urls, architect_id)
               `)
               .eq('user_id', user.id)
               .gte('created_at', thirtyDaysAgo.toISOString())
@@ -67,8 +96,7 @@ const HomeownerDashboard = () => {
               .from('saved_posts')
               .select(`
                 created_at,
-                posts(title, id, media_urls, architect_id),
-                type:value('save')
+                posts(title, id, media_urls, architect_id)
               `)
               .eq('user_id', user.id)
               .gte('created_at', thirtyDaysAgo.toISOString())
@@ -79,19 +107,17 @@ const HomeownerDashboard = () => {
               .select(`
                 created_at,
                 following_id,
-                profiles:profiles!following_id(full_name, profile_picture),
-                type:value('follow')
+                profiles:profiles!following_id(full_name, profile_picture)
               `)
               .eq('follower_id', user.id)
               .gte('created_at', thirtyDaysAgo.toISOString())
               .limit(10)
           ]);
           
-          const likes = likesResp.data || [];
-          const saves = savesResp.data || [];
-          const follows = followsResp.data || [];
+          const likes = (likesResp.data || []).map(item => ({ ...item, type: 'like' as const }));
+          const saves = (savesResp.data || []).map(item => ({ ...item, type: 'save' as const }));
+          const follows = (followsResp.data || []).map(item => ({ ...item, type: 'follow' as const }));
           
-          // Combine and sort by date
           const allActivity = [...likes, ...saves, ...follows].sort(
             (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           );
@@ -99,7 +125,6 @@ const HomeownerDashboard = () => {
           return allActivity.slice(0, 10);
         };
         
-        // Fetch architects that the user is following
         const fetchFollowing = async () => {
           const { data, error } = await supabase
             .from('follows')
@@ -115,7 +140,6 @@ const HomeownerDashboard = () => {
           return data || [];
         };
         
-        // Get all data in parallel
         const [activity, following] = await Promise.all([
           fetchActivity(),
           fetchFollowing()
@@ -174,7 +198,6 @@ const HomeownerDashboard = () => {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main content area */}
         <div className="lg:col-span-2">
           <Tabs defaultValue="liked-posts" className="space-y-4">
             <TabsList className="grid grid-cols-3 w-full sm:w-auto">
@@ -249,9 +272,7 @@ const HomeownerDashboard = () => {
           </Tabs>
         </div>
         
-        {/* Sidebar with user profile info and activity */}
         <div className="space-y-6">
-          {/* User profile card */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Your Profile</CardTitle>
@@ -295,7 +316,6 @@ const HomeownerDashboard = () => {
             </CardContent>
           </Card>
           
-          {/* Recent Activity */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Recent Activity</CardTitle>
@@ -341,7 +361,6 @@ const HomeownerDashboard = () => {
             </CardContent>
           </Card>
           
-          {/* Following */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg">Architects You Follow</CardTitle>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,6 +8,17 @@ import { Search } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 
+interface ProfileData {
+  id: string;
+  full_name: string;
+  profile_picture: string | null;
+}
+
+interface LastMessage {
+  content: string;
+  created_at: string;
+}
+
 interface Conversation {
   id: string;
   created_at: string;
@@ -14,15 +26,8 @@ interface Conversation {
   homeowner_id: string;
   architect_id: string;
   status: string;
-  profile: {
-    id: string;
-    full_name: string;
-    profile_picture: string | null;
-  };
-  last_message?: {
-    content: string;
-    created_at: string;
-  };
+  profile: ProfileData;
+  last_message?: LastMessage;
 }
 
 interface ConversationsListProps {
@@ -41,34 +46,35 @@ const ConversationsList = ({ onSelectConversation, selectedConversationId }: Con
       if (!user) return;
       
       try {
+        // Determine if the user is an architect or homeowner
+        const isArchitect = user.userType === 'architect';
+        const userIdField = isArchitect ? 'architect_id' : 'homeowner_id';
+        const otherIdField = isArchitect ? 'homeowner_id' : 'architect_id';
+        
         // Get all conversations for the current user
-        let query = supabase
+        const { data, error } = await supabase
           .from('conversations')
           .select(`
             *,
-            profile:profiles!inner(
-              id, 
-              full_name, 
-              profile_picture
-            )
-          `);
-        
-        // Adjust the query based on the user type
-        if (user.userType === 'architect') {
-          query = query.eq('architect_id', user.id)
-            .neq('profile.id', user.id);
-        } else {
-          query = query.eq('homeowner_id', user.id)
-            .neq('profile.id', user.id);
-        }
-        
-        const { data, error } = await query;
+            ${otherIdField}_profile:profiles!${otherIdField}(id, full_name, profile_picture)
+          `)
+          .eq(userIdField, user.id);
         
         if (error) throw error;
         
+        // Map the response to our expected format
+        const mappedConversations = (data || []).map(conv => {
+          // Rename the profile field for consistency with our interface
+          const otherProfile = conv[`${otherIdField}_profile`];
+          return {
+            ...conv,
+            profile: otherProfile
+          };
+        });
+        
         // Fetch the last message for each conversation
         const conversationsWithLastMessage = await Promise.all(
-          (data || []).map(async (conversation) => {
+          mappedConversations.map(async (conversation) => {
             const { data: messageData } = await supabase
               .from('messages')
               .select('content, created_at')
@@ -84,7 +90,7 @@ const ConversationsList = ({ onSelectConversation, selectedConversationId }: Con
           })
         );
         
-        setConversations(conversationsWithLastMessage);
+        setConversations(conversationsWithLastMessage as Conversation[]);
       } catch (error) {
         console.error('Error fetching conversations:', error);
       } finally {

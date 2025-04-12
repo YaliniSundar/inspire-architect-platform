@@ -113,8 +113,8 @@ export const getConversationById = async (conversationId: string): Promise<Conve
       .from('conversations')
       .select(`
         *,
-        architect:profiles!inner(id, full_name, profile_picture),
-        homeowner:profiles!inner(id, full_name, profile_picture)
+        architect:profiles!architect_id(id, full_name, profile_picture),
+        homeowner:profiles!homeowner_id(id, full_name, profile_picture)
       `)
       .eq('id', conversationId)
       .single();
