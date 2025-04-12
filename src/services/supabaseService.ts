@@ -269,27 +269,33 @@ export const unfollowArchitect = async (followerId: string, architectId: string)
 
 export const getFollowingList = async (userId: string) => {
   try {
-    const { data, error } = await supabase
+    // First get the following IDs
+    const { data: followingData, error: followingError } = await supabase
       .from('follows')
-      .select(`
-        following_id,
-        profiles!follows_following_id_fkey(
-          id, 
-          full_name, 
-          profile_picture, 
-          role
-        )
-      `)
+      .select('following_id')
       .eq('follower_id', userId);
     
-    if (error) throw error;
+    if (followingError) throw followingError;
+    
+    if (!followingData || followingData.length === 0) {
+      return { data: [], error: null };
+    }
+    
+    // Then get the profile data for those IDs
+    const followingIds = followingData.map(item => item.following_id);
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, full_name, profile_picture, role')
+      .in('id', followingIds);
+    
+    if (profilesError) throw profilesError;
     
     return { 
-      data: data?.map(item => ({
-        id: item.following_id,
-        name: item.profiles?.full_name || '',
-        avatarUrl: item.profiles?.profile_picture || '',
-        role: item.profiles?.role || ''
+      data: profilesData?.map(item => ({
+        id: item.id,
+        name: item.full_name || '',
+        avatarUrl: item.profile_picture || '',
+        role: item.role || ''
       })) || [], 
       error: null 
     };
@@ -301,27 +307,33 @@ export const getFollowingList = async (userId: string) => {
 
 export const getFollowersList = async (userId: string) => {
   try {
-    const { data, error } = await supabase
+    // First get the follower IDs
+    const { data: followerData, error: followerError } = await supabase
       .from('follows')
-      .select(`
-        follower_id,
-        profiles!follows_follower_id_fkey(
-          id, 
-          full_name, 
-          profile_picture, 
-          role
-        )
-      `)
+      .select('follower_id')
       .eq('following_id', userId);
     
-    if (error) throw error;
+    if (followerError) throw followerError;
+    
+    if (!followerData || followerData.length === 0) {
+      return { data: [], error: null };
+    }
+    
+    // Then get the profile data for those IDs
+    const followerIds = followerData.map(item => item.follower_id);
+    const { data: profilesData, error: profilesError } = await supabase
+      .from('profiles')
+      .select('id, full_name, profile_picture, role')
+      .in('id', followerIds);
+    
+    if (profilesError) throw profilesError;
     
     return { 
-      data: data?.map(item => ({
-        id: item.follower_id,
-        name: item.profiles?.full_name || '',
-        avatarUrl: item.profiles?.profile_picture || '',
-        role: item.profiles?.role || ''
+      data: profilesData?.map(item => ({
+        id: item.id,
+        name: item.full_name || '',
+        avatarUrl: item.profile_picture || '',
+        role: item.role || ''
       })) || [], 
       error: null 
     };
