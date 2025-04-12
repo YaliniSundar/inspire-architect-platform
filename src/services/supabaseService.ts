@@ -274,7 +274,7 @@ export const getFollowingList = async (userId: string) => {
       .from('follows')
       .select(`
         following_id,
-        profiles:following_id (
+        following_profiles:profiles!following_id(
           id, 
           full_name, 
           profile_picture, 
@@ -288,9 +288,9 @@ export const getFollowingList = async (userId: string) => {
     return { 
       data: data?.map(item => ({
         id: item.following_id,
-        name: item.profiles?.full_name || '',
-        avatarUrl: item.profiles?.profile_picture || '',
-        role: item.profiles?.role || ''
+        name: item.following_profiles?.full_name || '',
+        avatarUrl: item.following_profiles?.profile_picture || '',
+        role: item.following_profiles?.role || ''
       })) || [], 
       error: null 
     };
@@ -306,7 +306,7 @@ export const getFollowersList = async (userId: string) => {
       .from('follows')
       .select(`
         follower_id,
-        profiles:follower_id (
+        follower_profiles:profiles!follower_id(
           id, 
           full_name, 
           profile_picture, 
@@ -320,9 +320,9 @@ export const getFollowersList = async (userId: string) => {
     return { 
       data: data?.map(item => ({
         id: item.follower_id,
-        name: item.profiles?.full_name || '',
-        avatarUrl: item.profiles?.profile_picture || '',
-        role: item.profiles?.role || ''
+        name: item.follower_profiles?.full_name || '',
+        avatarUrl: item.follower_profiles?.profile_picture || '',
+        role: item.follower_profiles?.role || ''
       })) || [], 
       error: null 
     };
