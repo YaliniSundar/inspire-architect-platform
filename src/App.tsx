@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -31,6 +31,22 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 // Auth context
 import { AuthProvider } from "./contexts/AuthContext";
+import { useAuth } from '@/contexts/AuthContext';
+
+// HomeownerOnly route component
+const HomeownerRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (user.userType !== 'homeowner') {
+    return <Navigate to="/architect-dashboard" replace />;
+  }
+  
+  return <>{children}</>;
+};
 
 // Moving QueryClient inside the component to ensure React context is available
 const App = () => {
@@ -126,7 +142,9 @@ const App = () => {
                 path="/ai-generator" 
                 element={
                   <ProtectedRoute>
-                    <Layout><AIGenerator /></Layout>
+                    <HomeownerRoute>
+                      <Layout><AIGenerator /></Layout>
+                    </HomeownerRoute>
                   </ProtectedRoute>
                 } 
               />

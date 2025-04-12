@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, LogOutIcon, ArrowLeft, BookmarkIcon, UsersIcon, ImageIcon } from 'lucide-react';
+import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, LogOutIcon, ArrowLeft, BookmarkIcon, ImageIcon } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
 import React from 'react';
@@ -90,9 +90,9 @@ const Navbar: React.FC<NavbarProps> = ({ logo }) => {
                     <BookmarkIcon className="h-4 w-4" />
                     Dashboard
                   </Link>
-                  <Link to="/architects" className="flex items-center gap-2 text-sm font-medium">
-                    <UsersIcon className="h-4 w-4" />
-                    Architects
+                  <Link to="/explore" className="flex items-center gap-2 text-sm font-medium">
+                    <CompassIcon className="h-4 w-4" />
+                    Explore
                   </Link>
                   <Link to="/ai-generator" className="flex items-center gap-2 text-sm font-medium">
                     <SparklesIcon className="h-4 w-4" />
@@ -116,7 +116,7 @@ const Navbar: React.FC<NavbarProps> = ({ logo }) => {
             <SearchIcon className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder={isArchitect ? "Search designs, architects..." : "Search for inspiration..."}
+              placeholder={isArchitect ? "Search designs..." : "Search for inspiration..."}
               className="pl-8 bg-background"
             />
           </div>
@@ -138,11 +138,6 @@ const Navbar: React.FC<NavbarProps> = ({ logo }) => {
                   <p className="text-xs leading-none text-muted-foreground capitalize">{user?.userType}</p>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to={`/profile/${user?.id}`} className="w-full cursor-pointer">
-                    Profile
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/settings" className="w-full cursor-pointer">
                     Settings
