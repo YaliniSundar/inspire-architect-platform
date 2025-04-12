@@ -17,7 +17,8 @@ export type LoginFormValues = {
 // Authentication services
 export const signUp = async (data: SignupFormValues) => {
   try {
-    const { error } = await supabase.auth.signUp({
+    // First create the auth user
+    const { data: authData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
@@ -30,9 +31,13 @@ export const signUp = async (data: SignupFormValues) => {
     
     if (error) throw error;
     
-    // Create profile entry manually since we're bypassing email verification
+    if (!authData.user) {
+      throw new Error("User creation failed");
+    }
+    
+    // Create profile entry manually
     await createProfile({
-      id: (await supabase.auth.getUser()).data.user?.id || '',
+      id: authData.user.id,
       name: data.name,
       email: data.email,
       userType: data.userType
@@ -117,6 +122,8 @@ const createProfile = async (userData: {
   userType: 'architect' | 'homeowner';
 }) => {
   try {
+    console.log("Creating profile for user:", userData);
+    
     // Insert into profiles table
     const { error: profileError } = await supabase
       .from('profiles')
@@ -126,7 +133,10 @@ const createProfile = async (userData: {
         role: userData.userType
       });
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error("Error creating profile:", profileError);
+      throw profileError;
+    }
 
     // Insert into role-specific profile table
     if (userData.userType === 'architect') {
@@ -134,13 +144,19 @@ const createProfile = async (userData: {
         .from('architect_profiles')
         .insert({ id: userData.id });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating architect profile:", error);
+        throw error;
+      }
     } else {
       const { error } = await supabase
         .from('homeowner_profiles')
         .insert({ id: userData.id });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating homeowner profile:", error);
+        throw error;
+      }
     }
 
     return { success: true };

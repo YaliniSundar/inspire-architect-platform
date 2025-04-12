@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
+import { signUp } from '@/services/supabaseService';
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
@@ -53,24 +54,15 @@ const SignupForm = () => {
         duration: 5000,
       });
       
-      // Sign up with Supabase
-      const { data: authData, error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            name: data.name,
-            userType: data.userType
-          }
-        }
-      });
+      // Use the signUp function from supabaseService instead of direct supabase auth call
+      const result = await signUp(data);
       
-      if (error) throw error;
+      if (!result.success) throw new Error(result.error?.message || "Sign up failed");
       
       // Show success message
       toast({
         title: "Account created successfully",
-        description: "Please check your email for the verification link.",
+        description: "You can now log in with your credentials.",
       });
       
       // Navigate to login page

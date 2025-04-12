@@ -52,7 +52,7 @@ export const createConversation = async ({
       conversationId = newConversation.id;
     }
     
-    // Get the architect's details
+    // Get the architect's details directly
     const { data: architectData, error: architectError } = await supabase
       .from('profiles')
       .select('full_name, profile_picture')
@@ -109,30 +109,36 @@ export const createConversation = async ({
 
 export const getConversationById = async (conversationId: string): Promise<ConversationData | null> => {
   try {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+    
     const { data: conversation, error } = await supabase
       .from('conversations')
       .select(`
-        *,
-        architect:profiles!architect_id(id, full_name, profile_picture),
-        homeowner:profiles!homeowner_id(id, full_name, profile_picture)
+        *
       `)
       .eq('id', conversationId)
       .single();
     
     if (error) throw error;
     
-    // Determine which profile to return based on the current user
-    const { data: { user } } = await supabase.auth.getUser();
+    // Determine if the user is an architect or homeowner
+    const isArchitect = user.user.id === conversation.architect_id;
+    const otherUserId = isArchitect ? conversation.homeowner_id : conversation.architect_id;
     
-    if (!user) throw new Error("User not authenticated");
+    // Get the other user's profile
+    const { data: otherUserProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name, profile_picture')
+      .eq('id', otherUserId)
+      .single();
     
-    const isHomeowner = user.id === conversation.homeowner_id;
-    const profile = isHomeowner ? conversation.architect : conversation.homeowner;
+    if (profileError) throw profileError;
     
     return {
       id: conversation.id,
-      recipientName: profile.full_name,
-      recipientAvatar: profile.profile_picture || undefined
+      recipientName: otherUserProfile.full_name,
+      recipientAvatar: otherUserProfile.profile_picture || undefined
     };
   } catch (error: any) {
     console.error("Error getting conversation:", error);
