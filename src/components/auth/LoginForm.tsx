@@ -9,8 +9,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
-import { signIn, LoginFormValues } from '@/services/supabaseService';
-import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 const loginSchema = z.object({
@@ -18,12 +16,13 @@ const loginSchema = z.object({
   password: z.string().min(1, { message: 'Password is required' }),
 });
 
+type LoginFormValues = z.infer<typeof loginSchema>;
+
 const LoginForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
   
   // Get the redirect path from location state, or default to role-based dashboard
   const from = (location.state as any)?.from?.pathname || '/';
@@ -41,33 +40,22 @@ const LoginForm = () => {
     
     try {
       // Authenticate with Supabase
-      const { success, error } = await signIn(data);
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
       
-      if (success) {
-        // Get user from Supabase session
-        const { data: { session } } = await supabase.auth.getSession();
+      if (error) throw error;
+      
+      if (authData.session) {
+        // Get user metadata
+        const userType = authData.user?.user_metadata.userType || 'homeowner';
         
-        if (session?.user) {
-          // Get user metadata
-          const userType = session.user.user_metadata.userType || 'homeowner';
-          const name = session.user.user_metadata.name || '';
-          
-          // Log in the user in context
-          login({
-            id: session.user.id,
-            name: name,
-            email: session.user.email || '',
-            userType: userType as 'homeowner' | 'architect'
-          });
-          
-          // Determine where to navigate based on user role
-          const dashboardPath = userType === 'architect' ? '/architect-dashboard' : '/homeowner-dashboard';
-          
-          // Navigate to the page they were trying to access, or role-specific dashboard
-          navigate(from !== '/' ? from : dashboardPath, { replace: true });
-        }
-      } else {
-        throw new Error(error?.message || 'Login failed');
+        // Determine where to navigate based on user role
+        const dashboardPath = userType === 'architect' ? '/architect-dashboard' : '/homeowner-dashboard';
+        
+        // Navigate to the page they were trying to access, or role-specific dashboard
+        navigate(from !== '/' ? from : dashboardPath, { replace: true });
       }
     } catch (error: any) {
       console.error('Login error:', error);

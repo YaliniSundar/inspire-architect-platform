@@ -25,6 +25,8 @@ import HireArchitectPage from "./pages/HireArchitectPage";
 import SignupPage from "./pages/SignupPage";
 import VerifyOTPPage from "./pages/VerifyOTPPage";
 import CreatePasswordPage from "./pages/CreatePasswordPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ArchitectProfilePage from "./pages/ArchitectProfilePage";
 import LoginPage from "./pages/LoginPage";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -72,6 +74,8 @@ const App = () => {
               <Route path="/verify-otp" element={<VerifyOTPPage />} />
               <Route path="/create-password" element={<CreatePasswordPage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               
               {/* Protected routes - require authentication */}
               <Route 

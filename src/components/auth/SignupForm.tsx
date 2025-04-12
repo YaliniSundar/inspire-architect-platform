@@ -9,11 +9,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { EyeIcon, EyeOffIcon } from 'lucide-react';
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
   email: z.string().email({ message: 'Please enter a valid email address' }),
-  phone: z.string().optional(),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
   userType: z.enum(['homeowner', 'architect'], {
     required_error: 'Please select a user type',
   }),
@@ -24,13 +26,14 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 const SignupForm = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       name: '',
       email: '',
-      phone: '',
+      password: '',
       userType: 'homeowner', // Default to homeowner
     },
   });
@@ -39,9 +42,6 @@ const SignupForm = () => {
     setIsLoading(true);
     
     try {
-      // In a real application, you would call an API here
-      console.log('Signup data:', data);
-      
       // Add a note about the role being permanent
       const roleMessage = data.userType === 'homeowner' 
         ? "You're signing up as a Homeowner. This role cannot be changed later."
@@ -53,30 +53,41 @@ const SignupForm = () => {
         duration: 5000,
       });
       
-      // Mock API call success
-      setTimeout(() => {
-        // Store form data to session to use in next steps
-        sessionStorage.setItem('signupData', JSON.stringify(data));
-        
-        // Navigate to OTP verification
-        navigate('/verify-otp');
-        
-        toast({
-          title: "Verification code sent",
-          description: "Please check your email for the verification code.",
-        });
-      }, 1000);
-    } catch (error) {
-      console.error(error);
+      // Sign up with Supabase
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            userType: data.userType
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      // Show success message
+      toast({
+        title: "Account created successfully",
+        description: "Please check your email for the verification link.",
+      });
+      
+      // Navigate to login page
+      navigate('/login');
+    } catch (error: any) {
+      console.error("Error signing up:", error);
       toast({
         title: "Something went wrong",
-        description: "Please try again later.",
+        description: error.message || "Please try again later.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
   };
+
+  const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   return (
     <Form {...form}>
@@ -111,12 +122,34 @@ const SignupForm = () => {
         
         <FormField
           control={form.control}
-          name="phone"
+          name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone Number (Optional)</FormLabel>
+              <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your phone number" {...field} />
+                <div className="relative">
+                  <Input 
+                    type={showPassword ? "text" : "password"} 
+                    placeholder="Create a password (min. 6 characters)" 
+                    {...field} 
+                  />
+                  <Button 
+                    type="button"
+                    variant="ghost" 
+                    size="sm" 
+                    className="absolute right-0 top-0 h-full px-3"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? (
+                      <EyeOffIcon className="h-4 w-4 text-muted-foreground" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4 text-muted-foreground" />
+                    )}
+                    <span className="sr-only">
+                      {showPassword ? "Hide password" : "Show password"}
+                    </span>
+                  </Button>
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -159,7 +192,7 @@ const SignupForm = () => {
         />
         
         <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Processing..." : "Continue"}
+          {isLoading ? "Creating account..." : "Sign up"}
         </Button>
       </form>
     </Form>
