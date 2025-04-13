@@ -19,8 +19,8 @@ export const signUp = async (data: SignupFormValues) => {
   try {
     console.log("Starting signup process for:", data.email);
     
-    // First create the auth user
-    // The handle_new_user database trigger will create the profile
+    // Create the auth user with metadata
+    // The database trigger handle_new_user will automatically create the profile
     const { data: authData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -99,58 +99,6 @@ export const signOut = async () => {
       variant: "destructive",
     });
     
-    return { success: false, error };
-  }
-};
-
-// Create profile function to handle profile creation after sign-up
-const createProfile = async (userData: {
-  id: string;
-  name: string;
-  email: string;
-  userType: 'architect' | 'homeowner';
-}) => {
-  try {
-    console.log("Creating profile for user:", userData);
-    
-    // Insert into profiles table
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        id: userData.id,
-        full_name: userData.name,
-        role: userData.userType
-      });
-
-    if (profileError) {
-      console.error("Error creating profile:", profileError);
-      throw profileError;
-    }
-
-    // Insert into role-specific profile table
-    if (userData.userType === 'architect') {
-      const { error } = await supabase
-        .from('architect_profiles')
-        .insert({ id: userData.id });
-      
-      if (error) {
-        console.error("Error creating architect profile:", error);
-        throw error;
-      }
-    } else {
-      const { error } = await supabase
-        .from('homeowner_profiles')
-        .insert({ id: userData.id });
-      
-      if (error) {
-        console.error("Error creating homeowner profile:", error);
-        throw error;
-      }
-    }
-
-    return { success: true };
-  } catch (error: any) {
-    console.error('Error creating profile:', error);
     return { success: false, error };
   }
 };
