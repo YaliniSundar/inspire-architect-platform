@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/components/ui/use-toast';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
-import { signUp, SignupFormValues } from '@/services/supabaseService';
+import { signUp } from '@/services/supabaseService';
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
@@ -21,7 +21,7 @@ const signupSchema = z.object({
   }),
 });
 
-// This ensures that the form values match the SignupFormValues type
+// Define the form values type using zod schema
 type FormValues = z.infer<typeof signupSchema>;
 
 const SignupForm = () => {
@@ -54,27 +54,28 @@ const SignupForm = () => {
         duration: 5000,
       });
       
-      // Explicitly cast data to SignupFormValues since we know it matches the structure
-      const signupData: SignupFormValues = {
+      // All form fields are guaranteed to be present due to the schema validation
+      // We can confidently cast the data as SignupFormValues
+      const result = await signUp({
         name: data.name,
         email: data.email,
         password: data.password,
         userType: data.userType
-      };
-      
-      // Now data is properly typed and matches the SignupFormValues type
-      const result = await signUp(signupData);
+      });
       
       if (!result.success) throw new Error(result.error?.message || "Sign up failed");
+      
+      // Store email in localStorage for verification page
+      localStorage.setItem('signupEmail', data.email);
       
       // Show success message
       toast({
         title: "Account created successfully",
-        description: "You can now log in with your credentials.",
+        description: "Please check your email for verification link.",
       });
       
-      // Navigate to login page
-      navigate('/login');
+      // Navigate to verification page
+      navigate('/verify-otp?email=' + encodeURIComponent(data.email));
     } catch (error: any) {
       console.error("Error signing up:", error);
       toast({

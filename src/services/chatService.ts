@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -26,9 +27,10 @@ export const createConversation = async ({
       .select('id')
       .eq('homeowner_id', homeownerId)
       .eq('architect_id', architectId)
-      .single();
+      .maybeSingle();
     
     if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows returned
+      console.error("Error checking existing conversation:", checkError);
       throw checkError;
     }
     
@@ -36,6 +38,8 @@ export const createConversation = async ({
     
     // If no conversation exists, create one
     if (!conversationId) {
+      console.log("Creating new conversation between homeowner and architect");
+      
       const { data: newConversation, error: createError } = await supabase
         .from('conversations')
         .insert({
@@ -46,22 +50,33 @@ export const createConversation = async ({
         .select('id')
         .single();
       
-      if (createError) throw createError;
+      if (createError) {
+        console.error("Error creating conversation:", createError);
+        throw createError;
+      }
       
       conversationId = newConversation.id;
+      console.log("New conversation created with ID:", conversationId);
+    } else {
+      console.log("Using existing conversation with ID:", conversationId);
     }
     
-    // Get the architect's details using a direct query instead of relying on joins
+    // Get the architect's profile
     const { data: architectData, error: architectError } = await supabase
       .from('profiles')
       .select('full_name, profile_picture')
       .eq('id', architectId)
       .single();
     
-    if (architectError) throw architectError;
+    if (architectError) {
+      console.error("Error fetching architect profile:", architectError);
+      throw architectError;
+    }
     
     // Send the initial message if provided
     if (initialMessage && conversationId) {
+      console.log("Sending initial message to conversation:", conversationId);
+      
       const { error: messageError } = await supabase
         .from('messages')
         .insert({
@@ -70,10 +85,13 @@ export const createConversation = async ({
           content: initialMessage
         });
       
-      if (messageError) throw messageError;
+      if (messageError) {
+        console.error("Error sending initial message:", messageError);
+        throw messageError;
+      }
       
       // Create a notification for the architect
-      await supabase
+      const { error: notificationError } = await supabase
         .from('notifications')
         .insert({
           user_id: architectId,
@@ -81,6 +99,13 @@ export const createConversation = async ({
           content: `You have a new message from a homeowner interested in your services.`,
           related_id: conversationId
         });
+        
+      if (notificationError) {
+        console.error("Error creating notification:", notificationError);
+        // Continue even if notification fails
+      } else {
+        console.log("Notification created for architect");
+      }
     }
     
     toast({

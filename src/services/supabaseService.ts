@@ -17,6 +17,8 @@ export type LoginFormValues = {
 // Authentication services
 export const signUp = async (data: SignupFormValues) => {
   try {
+    console.log("Starting signup process for:", data.email);
+    
     // First create the auth user
     const { data: authData, error } = await supabase.auth.signUp({
       email: data.email,
@@ -29,34 +31,23 @@ export const signUp = async (data: SignupFormValues) => {
       }
     });
     
-    if (error) throw error;
-    
-    if (!authData.user) {
-      throw new Error("User creation failed");
+    if (error) {
+      console.error("Supabase auth error:", error);
+      throw error;
     }
     
-    // Create profile entry manually
-    await createProfile({
-      id: authData.user.id,
-      name: data.name,
-      email: data.email,
-      userType: data.userType
-    });
+    if (!authData.user) {
+      throw new Error("User creation failed - no user returned from auth");
+    }
     
-    toast({
-      title: "Account created successfully",
-      description: "You can now log in with your credentials.",
-    });
+    console.log("Auth user created successfully, ID:", authData.user.id);
     
-    return { success: true, error: null };
+    // The handle_new_user database trigger will create the profile
+    // We don't need to manually create profiles anymore
+    
+    return { success: true, error: null, user: authData.user };
   } catch (error: any) {
     console.error("Error signing up:", error);
-    
-    toast({
-      title: "Sign up failed",
-      description: error.message || "An error occurred during sign up.",
-      variant: "destructive",
-    });
     
     return { success: false, error };
   }
