@@ -52,7 +52,7 @@ export const createConversation = async ({
       conversationId = newConversation.id;
     }
     
-    // Get the architect's details directly
+    // Get the architect's details using a more explicit query
     const { data: architectData, error: architectError } = await supabase
       .from('profiles')
       .select('full_name, profile_picture')
@@ -126,7 +126,7 @@ export const getConversationById = async (conversationId: string): Promise<Conve
     const isArchitect = user.user.id === conversation.architect_id;
     const otherUserId = isArchitect ? conversation.homeowner_id : conversation.architect_id;
     
-    // Get the other user's profile
+    // Get the other user's profile with explicit query
     const { data: otherUserProfile, error: profileError } = await supabase
       .from('profiles')
       .select('full_name, profile_picture')

@@ -9,9 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/components/ui/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { EyeIcon, EyeOffIcon } from 'lucide-react';
-import { signUp } from '@/services/supabaseService';
+import { signUp, SignupFormValues } from '@/services/supabaseService';
 
 const signupSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
@@ -22,14 +21,15 @@ const signupSchema = z.object({
   }),
 });
 
-type SignupFormValues = z.infer<typeof signupSchema>;
+// This ensures that the form values match the SignupFormValues type
+type FormValues = z.infer<typeof signupSchema>;
 
 const SignupForm = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const form = useForm<SignupFormValues>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       name: '',
@@ -39,7 +39,7 @@ const SignupForm = () => {
     },
   });
 
-  const onSubmit = async (data: SignupFormValues) => {
+  const onSubmit = async (data: FormValues) => {
     setIsLoading(true);
     
     try {
@@ -54,7 +54,7 @@ const SignupForm = () => {
         duration: 5000,
       });
       
-      // Use the signUp function from supabaseService instead of direct supabase auth call
+      // Now data is properly typed and matches the SignupFormValues type
       const result = await signUp(data);
       
       if (!result.success) throw new Error(result.error?.message || "Sign up failed");

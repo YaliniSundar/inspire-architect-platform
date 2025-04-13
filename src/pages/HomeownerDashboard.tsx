@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Link } from 'react-router-dom';
@@ -11,39 +12,59 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 
-interface LikeActivity {
+// Define more precise types for activities
+interface BaseActivity {
   created_at: string;
-  posts: {
-    title: string;
-    id: string;
-    media_urls: string[];
-    architect_id: string;
-  };
+  type: 'like' | 'save' | 'follow';
+}
+
+interface LikeActivity extends BaseActivity {
   type: 'like';
-}
-
-interface SaveActivity {
-  created_at: string;
   posts: {
     title: string;
     id: string;
     media_urls: string[];
     architect_id: string;
   };
-  type: 'save';
 }
 
-interface FollowActivity {
-  created_at: string;
+interface SaveActivity extends BaseActivity {
+  type: 'save';
+  posts: {
+    title: string;
+    id: string;
+    media_urls: string[];
+    architect_id: string;
+  };
+}
+
+interface FollowActivity extends BaseActivity {
+  type: 'follow';
   following_id: string;
   profiles: {
     full_name: string;
     profile_picture: string | null;
   };
-  type: 'follow';
 }
 
 type Activity = LikeActivity | SaveActivity | FollowActivity;
+
+// Type guard function to check if an activity is valid
+function isValidActivity(activity: any): activity is Activity {
+  if (!activity || typeof activity !== 'object') return false;
+  
+  if (!activity.created_at || !activity.type) return false;
+  
+  if (activity.type === 'follow' && (!activity.following_id || !activity.profiles)) {
+    return false;
+  }
+  
+  if ((activity.type === 'like' || activity.type === 'save') && !activity.posts) {
+    return false;
+  }
+
+  return true;
+}
 
 const HomeownerDashboard = () => {
   const { user } = useAuth();
@@ -81,51 +102,63 @@ const HomeownerDashboard = () => {
           const thirtyDaysAgo = new Date(today);
           thirtyDaysAgo.setDate(today.getDate() - 30);
           
-          const [likesResp, savesResp, followsResp] = await Promise.all([
-            supabase
-              .from('likes')
-              .select(`
-                created_at,
-                posts(title, id, media_urls, architect_id)
-              `)
-              .eq('user_id', user.id)
-              .gte('created_at', thirtyDaysAgo.toISOString())
-              .limit(10),
-              
-            supabase
-              .from('saved_posts')
-              .select(`
-                created_at,
-                posts(title, id, media_urls, architect_id)
-              `)
-              .eq('user_id', user.id)
-              .gte('created_at', thirtyDaysAgo.toISOString())
-              .limit(10),
-              
-            supabase
-              .from('follows')
-              .select(`
-                created_at,
-                following_id,
-                profiles:profiles!following_id(full_name, profile_picture)
-              `)
-              .eq('follower_id', user.id)
-              .gte('created_at', thirtyDaysAgo.toISOString())
-              .limit(10)
-          ]);
+          // Fetch likes with proper join
+          const { data: likesData } = await supabase
+            .from('likes')
+            .select(`
+              created_at,
+              posts(title, id, media_urls, architect_id)
+            `)
+            .eq('user_id', user.id)
+            .gte('created_at', thirtyDaysAgo.toISOString())
+            .limit(10);
+            
+          // Fetch saves with proper join  
+          const { data: savesData } = await supabase
+            .from('saved_posts')
+            .select(`
+              created_at,
+              posts(title, id, media_urls, architect_id)
+            `)
+            .eq('user_id', user.id)
+            .gte('created_at', thirtyDaysAgo.toISOString())
+            .limit(10);
           
-          const likes = (likesResp.data || []).map(item => ({ ...item, type: 'like' as const }));
-          const saves = (savesResp.data || []).map(item => ({ ...item, type: 'save' as const }));
-          const follows = (followsResp.data || []).map(item => ({ ...item, type: 'follow' as const }));
+          // Fetch follows with explicit join to profiles
+          const { data: followsData } = await supabase
+            .from('follows')
+            .select(`
+              created_at,
+              following_id,
+              profiles:profiles!following_id(full_name, profile_picture)
+            `)
+            .eq('follower_id', user.id)
+            .gte('created_at', thirtyDaysAgo.toISOString())
+            .limit(10);
+
+          // Transform and validate data
+          const likes: Activity[] = (likesData || [])
+            .filter(item => item.posts)
+            .map(item => ({ ...item, type: 'like' as const }));
           
-          const allActivity = [...likes, ...saves, ...follows].sort(
-            (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          );
+          const saves: Activity[] = (savesData || [])
+            .filter(item => item.posts)
+            .map(item => ({ ...item, type: 'save' as const }));
+          
+          const follows: Activity[] = (followsData || [])
+            .filter(item => item.profiles && !item.profiles.error)
+            .map(item => ({ ...item, type: 'follow' as const }));
+          
+          // Combine and filter out invalid activities
+          const allActivity = [...likes, ...saves, ...follows]
+            .filter(isValidActivity)
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
           
           return allActivity.slice(0, 10);
         };
         
         const fetchFollowing = async () => {
+          // Explicit join to profiles
           const { data, error } = await supabase
             .from('follows')
             .select(`
@@ -137,7 +170,8 @@ const HomeownerDashboard = () => {
             
           if (error) throw error;
           
-          return data || [];
+          // Filter out joins that failed
+          return (data || []).filter(item => item.profiles && !item.profiles.error);
         };
         
         const [activity, following] = await Promise.all([
