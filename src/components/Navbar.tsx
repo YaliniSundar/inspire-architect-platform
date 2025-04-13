@@ -9,59 +9,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, LogOutIcon, ArrowLeft, BookmarkIcon, ImageIcon, MessageSquare } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { HomeIcon, SearchIcon, CompassIcon, SparklesIcon, UserIcon, BookmarkIcon, ImageIcon, MessageSquare } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import NotificationsDropdown from './notifications/NotificationsDropdown';
 import { Badge } from "@/components/ui/badge";
-import { getUnreadMessagesCount } from '@/services/chatService';
 
 interface NavbarProps {
   logo?: React.ReactNode;
 }
 
 const Navbar: React.FC<NavbarProps> = ({ logo }) => {
-  const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   // Check if we're on a page that needs a back button
-  const needsBackButton = ['/verify-otp', '/create-password', '/architect-profile'].includes(location.pathname);
-  
-  // Fetch unread messages count
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      const fetchUnreadCount = async () => {
-        const count = await getUnreadMessagesCount(user.id);
-        setUnreadMessagesCount(count);
-      };
-      
-      fetchUnreadCount();
-      
-      // Set up an interval to check for new messages
-      const interval = setInterval(fetchUnreadCount, 30000); // Every 30 seconds
-      
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated, user]);
-  
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out.",
-    });
-  };
+  const needsBackButton = ['/architect-profile'].includes(location.pathname);
 
   const handleBack = () => {
     navigate(-1);
   };
-
-  // Determine if user is architect or homeowner
-  const isArchitect = user?.userType === 'architect';
+  
+  // Mock user for demo purposes
+  const mockUser = {
+    id: "demo-user",
+    name: "Demo User",
+    email: "demo@example.com",
+    userType: "homeowner",
+  };
   
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -69,7 +45,6 @@ const Navbar: React.FC<NavbarProps> = ({ logo }) => {
         <div className="flex items-center gap-2">
           {needsBackButton && (
             <Button variant="ghost" size="icon" onClick={handleBack} className="mr-2">
-              <ArrowLeft className="h-4 w-4" />
               <span className="sr-only">Back</span>
             </Button>
           )}
@@ -89,121 +64,70 @@ const Navbar: React.FC<NavbarProps> = ({ logo }) => {
             <HomeIcon className="h-4 w-4" />
             Home
           </Link>
-          
-          {isAuthenticated ? (
-            <>
-              {isArchitect ? (
-                // Architect navigation
-                <>
-                  <Link to="/architect-dashboard" className="flex items-center gap-2 text-sm font-medium">
-                    <ImageIcon className="h-4 w-4" />
-                    Dashboard
-                  </Link>
-                  <Link to="/explore" className="flex items-center gap-2 text-sm font-medium">
-                    <CompassIcon className="h-4 w-4" />
-                    Explore
-                  </Link>
-                </>
-              ) : (
-                // Homeowner navigation
-                <>
-                  <Link to="/homeowner-dashboard" className="flex items-center gap-2 text-sm font-medium">
-                    <BookmarkIcon className="h-4 w-4" />
-                    Dashboard
-                  </Link>
-                  <Link to="/explore" className="flex items-center gap-2 text-sm font-medium">
-                    <CompassIcon className="h-4 w-4" />
-                    Explore
-                  </Link>
-                  <Link to="/ai-generator" className="flex items-center gap-2 text-sm font-medium">
-                    <SparklesIcon className="h-4 w-4" />
-                    AI Generator
-                  </Link>
-                </>
-              )}
-            </>
-          ) : (
-            <Button variant="ghost" size="sm" asChild className="gap-2">
-              <Link to="/login">
-                <CompassIcon className="h-4 w-4" />
-                Explore Designs
-              </Link>
-            </Button>
-          )}
+
+          <Link to="/homeowner-dashboard" className="flex items-center gap-2 text-sm font-medium">
+            <BookmarkIcon className="h-4 w-4" />
+            Dashboard
+          </Link>
+          <Link to="/explore" className="flex items-center gap-2 text-sm font-medium">
+            <CompassIcon className="h-4 w-4" />
+            Explore
+          </Link>
+          <Link to="/ai-generator" className="flex items-center gap-2 text-sm font-medium">
+            <SparklesIcon className="h-4 w-4" />
+            AI Generator
+          </Link>
         </div>
 
-        {isAuthenticated && (
-          <div className="hidden md:flex relative w-full max-w-sm items-center mx-4">
-            <SearchIcon className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder={isArchitect ? "Search designs..." : "Search for inspiration..."}
-              className="pl-8 bg-background"
-            />
-          </div>
-        )}
+        <div className="hidden md:flex relative w-full max-w-sm items-center mx-4">
+          <SearchIcon className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search for inspiration..."
+            className="pl-8 bg-background"
+          />
+        </div>
 
         <div className="flex items-center gap-2">
-          {isAuthenticated ? (
-            <>
-              <Button variant="ghost" size="icon" asChild className="relative">
-                <Link to="/messages">
-                  <MessageSquare className="h-5 w-5" />
-                  {unreadMessagesCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 px-1 min-w-[1.25rem] h-5 flex items-center justify-center">
-                      {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
-                    </Badge>
-                  )}
+          <Button variant="ghost" size="icon" asChild className="relative">
+            <Link to="/messages">
+              <MessageSquare className="h-5 w-5" />
+              {unreadMessagesCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 px-1 min-w-[1.25rem] h-5 flex items-center justify-center">
+                  {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                </Badge>
+              )}
+            </Link>
+          </Button>
+          
+          <NotificationsDropdown />
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="rounded-full">
+                <UserIcon className="h-5 w-5" />
+                <span className="sr-only">User menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="flex flex-col space-y-1 p-2">
+                <p className="text-sm font-medium leading-none">{mockUser.name}</p>
+                <p className="text-xs leading-none text-muted-foreground">{mockUser.email}</p>
+                <p className="text-xs leading-none text-muted-foreground capitalize">{mockUser.userType}</p>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to={`/profile/${mockUser.id}`} className="w-full cursor-pointer">
+                  Your Profile
                 </Link>
-              </Button>
-              
-              <NotificationsDropdown />
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full">
-                    <UserIcon className="h-5 w-5" />
-                    <span className="sr-only">User menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="flex flex-col space-y-1 p-2">
-                    <p className="text-sm font-medium leading-none">{user?.name}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
-                    <p className="text-xs leading-none text-muted-foreground capitalize">{user?.userType}</p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to={`/profile/${user?.id}`} className="w-full cursor-pointer">
-                      Your Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/settings" className="w-full cursor-pointer">
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={handleLogout}
-                    className="text-destructive focus:text-destructive cursor-pointer"
-                  >
-                    <LogOutIcon className="mr-2 h-4 w-4" />
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          ) : (
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/login">Log in</Link>
-              </Button>
-              <Button size="sm" asChild>
-                <Link to="/signup">Sign up</Link>
-              </Button>
-            </div>
-          )}
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/settings" className="w-full cursor-pointer">
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

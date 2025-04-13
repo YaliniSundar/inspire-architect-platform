@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -21,35 +21,7 @@ import HomeownerDashboard from "./pages/HomeownerDashboard";
 import ArchitectDashboard from "./pages/ArchitectDashboard";
 import HireArchitectPage from "./pages/HireArchitectPage";
 import ChatPage from "./pages/ChatPage";
-
-// Auth pages
-import SignupPage from "./pages/SignupPage";
-import VerifyOTPPage from "./pages/VerifyOTPPage";
-import CreatePasswordPage from "./pages/CreatePasswordPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ArchitectProfilePage from "./pages/ArchitectProfilePage";
-import LoginPage from "./pages/LoginPage";
-import ProtectedRoute from "./components/auth/ProtectedRoute";
-
-// Auth context
-import { AuthProvider } from "./contexts/AuthContext";
-import { useAuth } from '@/contexts/AuthContext';
-
-// HomeownerOnly route component
-const HomeownerRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useAuth();
-  
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  if (user.userType !== 'homeowner') {
-    return <Navigate to="/architect-dashboard" replace />;
-  }
-  
-  return <>{children}</>;
-};
 
 // Moving QueryClient inside the component to ensure React context is available
 const App = () => {
@@ -58,124 +30,33 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Layout><Index /></Layout>} />
-              <Route path="/terms-of-service" element={<Layout><TermsOfServicePage /></Layout>} />
-              <Route path="/privacy-policy" element={<Layout><PrivacyPolicyPage /></Layout>} />
-              <Route path="/cookie-policy" element={<Layout><CookiePolicyPage /></Layout>} />
-              
-              {/* Auth routes */}
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/verify-otp" element={<VerifyOTPPage />} />
-              <Route path="/create-password" element={<CreatePasswordPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              
-              {/* Protected routes - require authentication */}
-              <Route 
-                path="/homeowner-dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Layout><HomeownerDashboard /></Layout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/architect-dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Layout><ArchitectDashboard /></Layout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/explore" 
-                element={
-                  <ProtectedRoute>
-                    <Layout><Explore /></Layout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/architects" 
-                element={
-                  <ProtectedRoute>
-                    <Layout><ArchitectsListPage /></Layout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/architect-profile" 
-                element={
-                  <ProtectedRoute>
-                    <Layout><ArchitectProfilePage /></Layout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/profile/:id" 
-                element={
-                  <ProtectedRoute>
-                    <Layout><Profile /></Layout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/design/:id" 
-                element={
-                  <ProtectedRoute>
-                    <Layout><DesignDetail /></Layout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/hire/:id" 
-                element={
-                  <ProtectedRoute>
-                    <Layout><HireArchitectPage /></Layout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/messages" 
-                element={
-                  <ProtectedRoute>
-                    <Layout><ChatPage /></Layout>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/ai-generator" 
-                element={
-                  <ProtectedRoute>
-                    <HomeownerRoute>
-                      <Layout><AIGenerator /></Layout>
-                    </HomeownerRoute>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/settings" 
-                element={
-                  <ProtectedRoute>
-                    <Layout><SettingsPage /></Layout>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Layout><Index /></Layout>} />
+            <Route path="/terms-of-service" element={<Layout><TermsOfServicePage /></Layout>} />
+            <Route path="/privacy-policy" element={<Layout><PrivacyPolicyPage /></Layout>} />
+            <Route path="/cookie-policy" element={<Layout><CookiePolicyPage /></Layout>} />
+            <Route path="/explore" element={<Layout><Explore /></Layout>} />
+            <Route path="/architects" element={<Layout><ArchitectsListPage /></Layout>} />
+            <Route path="/architect-profile" element={<Layout><ArchitectProfilePage /></Layout>} />
+            <Route path="/profile/:id" element={<Layout><Profile /></Layout>} />
+            <Route path="/design/:id" element={<Layout><DesignDetail /></Layout>} />
+            <Route path="/hire/:id" element={<Layout><HireArchitectPage /></Layout>} />
+            <Route path="/messages" element={<Layout><ChatPage /></Layout>} />
+            <Route path="/ai-generator" element={<Layout><AIGenerator /></Layout>} />
+            <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
+            <Route path="/homeowner-dashboard" element={<Layout><HomeownerDashboard /></Layout>} />
+            <Route path="/architect-dashboard" element={<Layout><ArchitectDashboard /></Layout>} />
+            
+            {/* Catch-all route */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 };

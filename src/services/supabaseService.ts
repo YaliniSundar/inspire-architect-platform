@@ -1,104 +1,74 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
-// Types for user signup and login
-export type SignupFormValues = {
-  name: string;
-  email: string;
-  password: string;
-  userType: 'architect' | 'homeowner';
-};
-
-export type LoginFormValues = {
-  email: string;
-  password: string;
-};
-
-// Authentication services
-export const signUp = async (data: SignupFormValues) => {
+// Post interaction services
+export const likePost = async (userId: string, postId: string) => {
   try {
-    console.log("Starting signup process for:", data.email);
+    const { error } = await supabase
+      .from('likes')
+      .insert({
+        user_id: userId,
+        post_id: postId
+      });
     
-    // Create the auth user with metadata
-    // The database trigger handle_new_user will automatically create the profile
-    const { data: authData, error } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: {
-          name: data.name,
-          userType: data.userType
-        }
-      }
-    });
+    if (error) throw error;
     
-    if (error) {
-      console.error("Supabase auth error:", error);
-      throw error;
-    }
-    
-    if (!authData.user) {
-      throw new Error("User creation failed - no user returned from auth");
-    }
-    
-    console.log("Auth user created successfully, ID:", authData.user.id);
-    
-    return { success: true, error: null, user: authData.user };
+    return { success: true, error: null };
   } catch (error: any) {
-    console.error("Error signing up:", error);
-    
+    console.error("Error liking post:", error);
     return { success: false, error };
   }
 };
 
-export const signIn = async (data: LoginFormValues) => {
+export const unlikePost = async (userId: string, postId: string) => {
   try {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
+    const { error } = await supabase
+      .from('likes')
+      .delete()
+      .eq('user_id', userId)
+      .eq('post_id', postId);
     
     if (error) throw error;
     
-    toast({
-      title: "Logged in successfully",
-      description: "Welcome back to Design Next!",
-    });
-    
     return { success: true, error: null };
   } catch (error: any) {
-    console.error("Error signing in:", error);
-    
-    toast({
-      title: "Login failed",
-      description: error.message || "Invalid email or password.",
-      variant: "destructive",
-    });
-    
+    console.error("Error unliking post:", error);
     return { success: false, error };
   }
 };
 
-export const signOut = async () => {
+export const savePost = async (userId: string, postId: string) => {
   try {
-    const { error } = await supabase.auth.signOut();
+    const { error } = await supabase
+      .from('saved_posts')
+      .insert({
+        user_id: userId,
+        post_id: postId
+      });
     
     if (error) throw error;
     
-    toast({
-      title: "Logged out successfully",
-    });
+    return { success: true, error: null };
+  } catch (error: any) {
+    console.error("Error saving post:", error);
+    return { success: false, error };
+  }
+};
+
+export const unsavePost = async (userId: string, postId: string) => {
+  try {
+    const { error } = await supabase
+      .from('saved_posts')
+      .delete()
+      .eq('user_id', userId)
+      .eq('post_id', postId);
+    
+    if (error) throw error;
     
     return { success: true, error: null };
   } catch (error: any) {
-    console.error("Error signing out:", error);
-    
-    toast({
-      title: "Sign out failed",
-      description: error.message || "An error occurred during sign out.",
-      variant: "destructive",
-    });
-    
+    console.error("Error unsaving post:", error);
     return { success: false, error };
   }
 };
@@ -293,77 +263,6 @@ export const getFollowersList = async (userId: string) => {
   } catch (error: any) {
     console.error("Error fetching followers list:", error);
     return { data: [], error };
-  }
-};
-
-// Post interaction services
-export const likePost = async (userId: string, postId: string) => {
-  try {
-    const { error } = await supabase
-      .from('likes')
-      .insert({
-        user_id: userId,
-        post_id: postId
-      });
-    
-    if (error) throw error;
-    
-    return { success: true, error: null };
-  } catch (error: any) {
-    console.error("Error liking post:", error);
-    return { success: false, error };
-  }
-};
-
-export const unlikePost = async (userId: string, postId: string) => {
-  try {
-    const { error } = await supabase
-      .from('likes')
-      .delete()
-      .eq('user_id', userId)
-      .eq('post_id', postId);
-    
-    if (error) throw error;
-    
-    return { success: true, error: null };
-  } catch (error: any) {
-    console.error("Error unliking post:", error);
-    return { success: false, error };
-  }
-};
-
-export const savePost = async (userId: string, postId: string) => {
-  try {
-    const { error } = await supabase
-      .from('saved_posts')
-      .insert({
-        user_id: userId,
-        post_id: postId
-      });
-    
-    if (error) throw error;
-    
-    return { success: true, error: null };
-  } catch (error: any) {
-    console.error("Error saving post:", error);
-    return { success: false, error };
-  }
-};
-
-export const unsavePost = async (userId: string, postId: string) => {
-  try {
-    const { error } = await supabase
-      .from('saved_posts')
-      .delete()
-      .eq('user_id', userId)
-      .eq('post_id', postId);
-    
-    if (error) throw error;
-    
-    return { success: true, error: null };
-  } catch (error: any) {
-    console.error("Error unsaving post:", error);
-    return { success: false, error };
   }
 };
 

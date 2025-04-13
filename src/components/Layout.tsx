@@ -1,17 +1,22 @@
 
 import React from 'react';
-import Footer from './Footer';
 import Navbar from './Navbar';
+import Footer from './Footer';
 import DesignNestLogo from './DesignNestLogo';
 
-const Layout = ({ children }: { children: React.ReactNode }) => {
+interface LayoutProps {
+  children: React.ReactNode;
+  hideFooter?: boolean;
+}
+
+const Layout: React.FC<LayoutProps> = ({ children, hideFooter = false }) => {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar logo={<DesignNestLogo size="md" showDNOnly={true} />} />
+    <div className="flex flex-col min-h-screen">
+      <Navbar logo={<DesignNestLogo size="md" />} />
       <main className="flex-1">
         {children}
       </main>
-      <Footer logo={<DesignNestLogo size="sm" showDNOnly={true} />} />
+      {!hideFooter && <Footer />}
     </div>
   );
 };
