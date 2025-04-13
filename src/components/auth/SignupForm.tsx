@@ -21,7 +21,6 @@ const signupSchema = z.object({
   }),
 });
 
-// Define the form values type using zod schema
 type FormValues = z.infer<typeof signupSchema>;
 
 const SignupForm = () => {
@@ -35,16 +34,16 @@ const SignupForm = () => {
       name: '',
       email: '',
       password: '',
-      userType: 'homeowner', // Default to homeowner
+      userType: 'homeowner',
     },
   });
 
-  const onSubmit = async (data: FormValues) => {
+  const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     
     try {
       // Add a note about the role being permanent
-      const roleMessage = data.userType === 'homeowner' 
+      const roleMessage = values.userType === 'homeowner' 
         ? "You're signing up as a Homeowner. This role cannot be changed later."
         : "You're signing up as an Architect. This role cannot be changed later.";
         
@@ -54,19 +53,22 @@ const SignupForm = () => {
         duration: 5000,
       });
       
-      // All form fields are guaranteed to be present due to the schema validation
-      // We can confidently cast the data as SignupFormValues
+      console.log("Submitting signup form with data:", values);
+      
       const result = await signUp({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        userType: data.userType
+        name: values.name,
+        email: values.email,
+        password: values.password,
+        userType: values.userType
       });
       
-      if (!result.success) throw new Error(result.error?.message || "Sign up failed");
+      if (!result.success) {
+        console.error("Signup failed with result:", result);
+        throw new Error(result.error?.message || "Sign up failed");
+      }
       
       // Store email in localStorage for verification page
-      localStorage.setItem('signupEmail', data.email);
+      localStorage.setItem('signupEmail', values.email);
       
       // Show success message
       toast({
@@ -75,7 +77,7 @@ const SignupForm = () => {
       });
       
       // Navigate to verification page
-      navigate('/verify-otp?email=' + encodeURIComponent(data.email));
+      navigate('/verify-otp?email=' + encodeURIComponent(values.email));
     } catch (error: any) {
       console.error("Error signing up:", error);
       toast({

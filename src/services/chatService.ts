@@ -90,21 +90,26 @@ export const createConversation = async ({
         throw messageError;
       }
       
-      // Create a notification for the architect
-      const { error: notificationError } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: architectId,
-          type: 'message',
-          content: `You have a new message from a homeowner interested in your services.`,
-          related_id: conversationId
-        });
-        
-      if (notificationError) {
-        console.error("Error creating notification:", notificationError);
-        // Continue even if notification fails
-      } else {
-        console.log("Notification created for architect");
+      try {
+        // Create a notification for the architect
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: architectId,
+            type: 'message',
+            content: `You have a new message from a homeowner interested in your services.`,
+            related_id: conversationId
+          });
+          
+        if (notificationError) {
+          console.error("Error creating notification:", notificationError);
+          // Continue even if notification fails
+        } else {
+          console.log("Notification created for architect");
+        }
+      } catch (notificationError) {
+        console.error("Error in notification creation, continuing anyway:", notificationError);
+        // We don't want to fail the whole operation just because notifications failed
       }
     }
     

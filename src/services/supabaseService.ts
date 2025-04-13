@@ -20,6 +20,7 @@ export const signUp = async (data: SignupFormValues) => {
     console.log("Starting signup process for:", data.email);
     
     // First create the auth user
+    // The handle_new_user database trigger will create the profile
     const { data: authData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
@@ -41,9 +42,6 @@ export const signUp = async (data: SignupFormValues) => {
     }
     
     console.log("Auth user created successfully, ID:", authData.user.id);
-    
-    // The handle_new_user database trigger will create the profile
-    // We don't need to manually create profiles anymore
     
     return { success: true, error: null, user: authData.user };
   } catch (error: any) {
@@ -164,7 +162,7 @@ export const getProfile = async (userId: string) => {
       .from('profiles')
       .select('*, architect_profiles(*), homeowner_profiles(*)')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
     
     if (profileError) throw profileError;
     
