@@ -54,8 +54,16 @@ const SignupForm = () => {
         duration: 5000,
       });
       
+      // Explicitly cast data to SignupFormValues since we know it matches the structure
+      const signupData: SignupFormValues = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        userType: data.userType
+      };
+      
       // Now data is properly typed and matches the SignupFormValues type
-      const result = await signUp(data);
+      const result = await signUp(signupData);
       
       if (!result.success) throw new Error(result.error?.message || "Sign up failed");
       

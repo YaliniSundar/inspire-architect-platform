@@ -55,8 +55,12 @@ function isValidActivity(activity: any): activity is Activity {
   
   if (!activity.created_at || !activity.type) return false;
   
-  if (activity.type === 'follow' && (!activity.following_id || !activity.profiles)) {
-    return false;
+  if (activity.type === 'follow') {
+    if (!activity.following_id) return false;
+    // Check if profiles object exists and has required properties
+    if (!activity.profiles || typeof activity.profiles !== 'object' || !('full_name' in activity.profiles)) {
+      return false;
+    }
   }
   
   if ((activity.type === 'like' || activity.type === 'save') && !activity.posts) {
@@ -124,17 +128,34 @@ const HomeownerDashboard = () => {
             .gte('created_at', thirtyDaysAgo.toISOString())
             .limit(10);
           
-          // Fetch follows with explicit join to profiles
+          // Fetch follows with explicit JOIN
+          // Use a different approach for follows to fix the relationship issue
           const { data: followsData } = await supabase
             .from('follows')
             .select(`
               created_at,
-              following_id,
-              profiles:profiles!following_id(full_name, profile_picture)
+              following_id
             `)
             .eq('follower_id', user.id)
             .gte('created_at', thirtyDaysAgo.toISOString())
             .limit(10);
+
+          // Fetch profile data separately for follows
+          const followsWithProfiles = await Promise.all(
+            (followsData || []).map(async (follow) => {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('full_name, profile_picture')
+                .eq('id', follow.following_id)
+                .single();
+              
+              return {
+                ...follow,
+                type: 'follow' as const,
+                profiles: profileData || { full_name: 'Unknown User', profile_picture: null }
+              };
+            })
+          );
 
           // Transform and validate data
           const likes: Activity[] = (likesData || [])
@@ -145,12 +166,8 @@ const HomeownerDashboard = () => {
             .filter(item => item.posts)
             .map(item => ({ ...item, type: 'save' as const }));
           
-          const follows: Activity[] = (followsData || [])
-            .filter(item => item.profiles && !item.profiles.error)
-            .map(item => ({ ...item, type: 'follow' as const }));
-          
           // Combine and filter out invalid activities
-          const allActivity = [...likes, ...saves, ...follows]
+          const allActivity = [...likes, ...saves, ...followsWithProfiles]
             .filter(isValidActivity)
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
           
@@ -158,20 +175,32 @@ const HomeownerDashboard = () => {
         };
         
         const fetchFollowing = async () => {
-          // Explicit join to profiles
-          const { data, error } = await supabase
+          // Fetch follows first
+          const { data: followsData, error: followsError } = await supabase
             .from('follows')
-            .select(`
-              following_id,
-              profiles:profiles!following_id(full_name, profile_picture)
-            `)
+            .select('following_id')
             .eq('follower_id', user.id)
             .limit(5);
             
-          if (error) throw error;
+          if (followsError) throw followsError;
           
-          // Filter out joins that failed
-          return (data || []).filter(item => item.profiles && !item.profiles.error);
+          // Then fetch profiles separately
+          const following = await Promise.all(
+            (followsData || []).map(async (follow) => {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('full_name, profile_picture')
+                .eq('id', follow.following_id)
+                .single();
+                
+              return {
+                following_id: follow.following_id,
+                profiles: profileData || { full_name: 'Unknown User', profile_picture: null }
+              };
+            })
+          );
+          
+          return following;
         };
         
         const [activity, following] = await Promise.all([

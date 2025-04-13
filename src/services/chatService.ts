@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/components/ui/use-toast";
 
@@ -52,7 +51,7 @@ export const createConversation = async ({
       conversationId = newConversation.id;
     }
     
-    // Get the architect's details using a more explicit query
+    // Get the architect's details using a direct query instead of relying on joins
     const { data: architectData, error: architectError } = await supabase
       .from('profiles')
       .select('full_name, profile_picture')
@@ -114,9 +113,7 @@ export const getConversationById = async (conversationId: string): Promise<Conve
     
     const { data: conversation, error } = await supabase
       .from('conversations')
-      .select(`
-        *
-      `)
+      .select('*')
       .eq('id', conversationId)
       .single();
     
@@ -126,7 +123,7 @@ export const getConversationById = async (conversationId: string): Promise<Conve
     const isArchitect = user.user.id === conversation.architect_id;
     const otherUserId = isArchitect ? conversation.homeowner_id : conversation.architect_id;
     
-    // Get the other user's profile with explicit query
+    // Get the other user's profile with a direct query
     const { data: otherUserProfile, error: profileError } = await supabase
       .from('profiles')
       .select('full_name, profile_picture')
